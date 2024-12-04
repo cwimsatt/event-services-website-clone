@@ -3,8 +3,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const grid = document.querySelector('.gallery-grid');
     
     if (grid) {
-        // Wait for images to load before initializing Masonry
-        imagesLoaded(grid, function() {
+        // Wait for all images to load before initializing Masonry
+        window.imagesLoaded(grid, function() {
             const masonry = new Masonry(grid, {
                 itemSelector: '.gallery-item',
                 columnWidth: '.gallery-item',
@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Initialize lightbox
             const lightbox = GLightbox({
-                selector: '.gallery-item',
+                selector: '.glightbox',
                 touchNavigation: true,
                 loop: true,
                 autoplayVideos: true
@@ -40,12 +40,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     });
 
-                    // Re-layout Masonry
+                    // Re-layout Masonry after filtering
                     masonry.layout();
                 });
             });
 
-            // Lazy loading
+            // Lazy loading for images
             const lazyImages = document.querySelectorAll('.lazy');
             const imageObserver = new IntersectionObserver((entries, observer) => {
                 entries.forEach(entry => {
@@ -54,6 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         img.src = img.dataset.src;
                         img.classList.remove('lazy');
                         observer.unobserve(img);
+                        masonry.layout(); // Re-layout after image loads
                     }
                 });
             });
