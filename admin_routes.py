@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from app import db
-from models import User, Event
+from models import User, Event, Category
 
 admin = Blueprint('admin', __name__)
 
@@ -87,3 +87,67 @@ def delete_event(id):
 def logout():
     logout_user()
     return redirect(url_for('index'))
+
+@admin.route('/admin/categories')
+@login_required
+def list_categories():
+    if not current_user.is_admin:
+        flash('Access denied. Admin privileges required.')
+        return redirect(url_for('index'))
+    categories = Category.query.all()
+    return render_template('admin/categories.html', categories=categories)
+
+@admin.route('/admin/category/new', methods=['GET', 'POST'])
+@login_required
+def new_category():
+    if not current_user.is_admin:
+        flash('Access denied. Admin privileges required.')
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        category = Category(
+            name=request.form.get('name'),
+            slug=request.form.get('name').lower().replace(' ', '-'),
+            description=request.form.get('description')
+        )
+        db.session.add(category)
+        db.session.commit()
+        flash('Category created successfully')
+        return redirect(url_for('admin.list_categories'))
+    
+    return render_template('admin/category_form.html')
+
+@admin.route('/admin/category/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_category(id):
+    if not current_user.is_admin:
+        flash('Access denied. Admin privileges required.')
+        return redirect(url_for('index'))
+    
+    category = Category.query.get_or_404(id)
+    if request.method == 'POST':
+        category.name = request.form.get('name')
+        category.slug = request.form.get('name').lower().replace(' ', '-')
+        category.description = request.form.get('description')
+        db.session.commit()
+        flash('Category updated successfully')
+        return redirect(url_for('admin.list_categories'))
+    
+    return render_template('admin/category_form.html', category=category)
+
+@admin.route('/admin/category/<int:id>/delete', methods=['POST'])
+@login_required
+def delete_category(id):
+    if not current_user.is_admin:
+        flash('Access denied. Admin privileges required.')
+        return redirect(url_for('index'))
+    
+    category = Category.query.get_or_404(id)
+    if Event.query.filter_by(category_id=category.id).first():
+        flash('Cannot delete category that has events')
+        return redirect(url_for('admin.list_categories'))
+    
+    db.session.delete(category)
+    db.session.commit()
+    flash('Category deleted successfully')
+    return redirect(url_for('admin.list_categories'))

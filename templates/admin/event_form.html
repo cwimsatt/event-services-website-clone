@@ -12,11 +12,11 @@
         
         <div class="mb-3">
             <label for="category" class="form-label">Category</label>
-            <select class="form-control" id="category" name="category" required>
+            <select class="form-control" id="category_id" name="category_id" required>
                 <option value="">Select a category</option>
-                <option value="wedding" {% if event and event.category == 'wedding' %}selected{% endif %}>Wedding</option>
-                <option value="corporate" {% if event and event.category == 'corporate' %}selected{% endif %}>Corporate</option>
-                <option value="social" {% if event and event.category == 'social' %}selected{% endif %}>Social Event</option>
+                {% for category in categories %}
+                <option value="{{ category.id }}" {% if event and event.category_id == category.id %}selected{% endif %}>{{ category.name }}</option>
+                {% endfor %}
             </select>
         </div>
         
