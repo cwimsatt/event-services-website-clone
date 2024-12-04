@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5 pt-5">
+    <h2>{% if event %}Edit{% else %}New{% endif %} Event</h2>
+    
+    <form method="POST">
+        <div class="mb-3">
+            <label for="title" class="form-label">Title</label>
+            <input type="text" class="form-control" id="title" name="title" value="{{ event.title if event else '' }}" required>
+        </div>
+        
+        <div class="mb-3">
+            <label for="category" class="form-label">Category</label>
+            <select class="form-control" id="category" name="category" required>
+                <option value="">Select a category</option>
+                <option value="wedding" {% if event and event.category == 'wedding' %}selected{% endif %}>Wedding</option>
+                <option value="corporate" {% if event and event.category == 'corporate' %}selected{% endif %}>Corporate</option>
+                <option value="social" {% if event and event.category == 'social' %}selected{% endif %}>Social Event</option>
+            </select>
+        </div>
+        
+        <div class="mb-3">
+            <label for="description" class="form-label">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="3" required>{{ event.description if event else '' }}</textarea>
+        </div>
+        
+        <div class="mb-3">
+            <label for="image_url" class="form-label">Image URL</label>
+            <input type="url" class="form-control" id="image_url" name="image_url" value="{{ event.image_url if event else '' }}" required>
+        </div>
+        
+        <div class="mb-3">
+            <label for="video_url" class="form-label">Video URL (optional)</label>
+            <input type="url" class="form-control" id="video_url" name="video_url" value="{{ event.video_url if event else '' }}">
+        </div>
+        
+        <div class="mb-3">
+            <button type="submit" class="btn btn-primary">Save Event</button>
+            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
