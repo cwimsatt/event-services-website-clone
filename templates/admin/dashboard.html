@@ -2,9 +2,14 @@
 
 {% block content %}
 <div class="container mt-5 pt-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2>Portfolio Management</h2>
-        <a href="{{ url_for('admin.new_event') }}" class="btn btn-primary">Add New Event</a>
+    <div class="mb-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>Portfolio Management</h2>
+            <div>
+                <a href="{{ url_for('admin.list_categories') }}" class="btn btn-secondary me-2">Manage Categories</a>
+                <a href="{{ url_for('admin.new_event') }}" class="btn btn-primary">Add New Event</a>
+            </div>
+        </div>
     </div>
 
     {% with messages = get_flashed_messages() %}
@@ -29,7 +34,7 @@
                 {% for event in events %}
                 <tr>
                     <td>{{ event.title }}</td>
-                    <td>{{ event.category }}</td>
+                    <td>{{ event.category.name }}</td>
                     <td>{{ event.date.strftime('%Y-%m-%d') }}</td>
                     <td>
                         <a href="{{ url_for('admin.edit_event', id=event.id) }}" class="btn btn-sm btn-primary">Edit</a>

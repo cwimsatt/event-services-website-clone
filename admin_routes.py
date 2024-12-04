@@ -34,10 +34,17 @@ def new_event():
         flash('Access denied. Admin privileges required.')
         return redirect(url_for('index'))
     
+    categories = Category.query.all()
+    
     if request.method == 'POST':
+        category_id = request.form.get('category_id')
+        if not category_id or not Category.query.get(category_id):
+            flash('Please select a valid category')
+            return render_template('admin/event_form.html', categories=categories)
+        
         event = Event(
             title=request.form.get('title'),
-            category=request.form.get('category'),
+            category_id=category_id,
             description=request.form.get('description'),
             image_url=request.form.get('image_url'),
             video_url=request.form.get('video_url')
@@ -47,7 +54,7 @@ def new_event():
         flash('Event created successfully')
         return redirect(url_for('admin.dashboard'))
     
-    return render_template('admin/event_form.html')
+    return render_template('admin/event_form.html', categories=categories)
 
 @admin.route('/admin/event/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -57,9 +64,16 @@ def edit_event(id):
         return redirect(url_for('index'))
     
     event = Event.query.get_or_404(id)
+    categories = Category.query.all()
+    
     if request.method == 'POST':
+        category_id = request.form.get('category_id')
+        if not category_id or not Category.query.get(category_id):
+            flash('Please select a valid category')
+            return render_template('admin/event_form.html', event=event, categories=categories)
+            
         event.title = request.form.get('title')
-        event.category = request.form.get('category')
+        event.category_id = category_id
         event.description = request.form.get('description')
         event.image_url = request.form.get('image_url')
         event.video_url = request.form.get('video_url')
@@ -67,7 +81,7 @@ def edit_event(id):
         flash('Event updated successfully')
         return redirect(url_for('admin.dashboard'))
     
-    return render_template('admin/event_form.html', event=event)
+    return render_template('admin/event_form.html', event=event, categories=categories)
 
 @admin.route('/admin/event/<int:id>/delete', methods=['POST'])
 @login_required

@@ -7,20 +7,22 @@
         
         <!-- Category Filter -->
         <div class="filter-buttons text-center mb-4">
-            <button class="btn btn-outline-primary filter-btn me-2 {% if active_category == 'all' %}active{% endif %}" 
-                    data-category="all">All</button>
-            <button class="btn btn-outline-primary filter-btn me-2 {% if active_category == 'wedding' %}active{% endif %}" 
-                    data-category="wedding">Weddings</button>
-            <button class="btn btn-outline-primary filter-btn me-2 {% if active_category == 'corporate' %}active{% endif %}" 
-                    data-category="corporate">Corporate</button>
-            <button class="btn btn-outline-primary filter-btn me-2 {% if active_category == 'social' %}active{% endif %}" 
-                    data-category="social">Social Events</button>
+            <a href="{{ url_for('portfolio', category_id='all') }}" 
+               class="btn btn-outline-primary me-2 {% if active_category == 'all' %}active{% endif %}">
+                All
+            </a>
+            {% for category in categories %}
+            <a href="{{ url_for('portfolio', category_id=category.id) }}" 
+               class="btn btn-outline-primary me-2 {% if active_category|string == category.id|string %}active{% endif %}">
+                {{ category.name }}
+            </a>
+            {% endfor %}
         </div>
 
         <!-- Gallery Grid -->
         <div class="gallery-grid">
             {% for event in events %}
-            <div class="gallery-item" data-category="{{ event.category }}">
+            <div class="gallery-item" data-category="{{ event.category.name }}">
                 {% if event.video_url %}
                 <div class="video-container">
                     <div class="video-thumbnail" data-video-id="video-{{ event.id }}">

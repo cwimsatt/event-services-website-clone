@@ -10,12 +10,13 @@ def index():
 
 @app.route('/portfolio')
 def portfolio():
-    category = request.args.get('category', 'all')
-    if category != 'all':
-        events = Event.query.filter_by(category=category).all()
+    categories = Category.query.all()
+    category_id = request.args.get('category_id', 'all')
+    if category_id != 'all':
+        events = Event.query.filter_by(category_id=category_id).all()
     else:
         events = Event.query.all()
-    return render_template('portfolio.html', events=events, active_category=category)
+    return render_template('portfolio.html', events=events, categories=categories, active_category=category_id)
 
 @app.route('/about')
 def about():
