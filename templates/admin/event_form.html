@@ -4,7 +4,7 @@
 <div class="container mt-5 pt-5">
     <h2>{% if event %}Edit{% else %}New{% endif %} Event</h2>
     
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data">
         <div class="mb-3">
             <label for="title" class="form-label">Title</label>
             <input type="text" class="form-control" id="title" name="title" value="{{ event.title if event else '' }}" required>
@@ -26,14 +26,42 @@
         </div>
         
         <div class="mb-3">
-            <label for="image_url" class="form-label">Image URL</label>
-            <input type="url" class="form-control" id="image_url" name="image_url" value="{{ event.image_url if event else '' }}" required>
+            <label for="image" class="form-label">Event Image</label>
+            <input type="file" class="form-control" id="image" name="image" accept=".jpg,.jpeg,.png" {% if not event %}required{% endif %}>
+            {% if event and event.image_path %}
+            <div class="mt-2">
+                <small class="text-muted">Current image: {{ event.image_path }}</small>
+            </div>
+            {% endif %}
+            <small class="text-muted">Max size: 10MB. Allowed formats: JPG, JPEG, PNG</small>
         </div>
         
         <div class="mb-3">
-            <label for="video_url" class="form-label">Video URL (optional)</label>
-            <input type="url" class="form-control" id="video_url" name="video_url" value="{{ event.video_url if event else '' }}">
+            <label for="video" class="form-label">Event Video (optional)</label>
+            <input type="file" class="form-control" id="video" name="video" accept=".mp4">
+            {% if event and event.video_path %}
+            <div class="mt-2">
+                <small class="text-muted">Current video: {{ event.video_path }}</small>
+            </div>
+            {% endif %}
+            <small class="text-muted">Max size: 50MB. Allowed format: MP4</small>
         </div>
+
+        <script>
+            document.getElementById('image').addEventListener('change', function() {
+                if (this.files[0].size > 10 * 1024 * 1024) {
+                    alert('Image file size exceeds 10MB limit');
+                    this.value = '';
+                }
+            });
+
+            document.getElementById('video').addEventListener('change', function() {
+                if (this.files[0] && this.files[0].size > 50 * 1024 * 1024) {
+                    alert('Video file size exceeds 50MB limit');
+                    this.value = '';
+                }
+            });
+        </script>
         
         <div class="mb-3">
             <button type="submit" class="btn btn-primary">Save Event</button>

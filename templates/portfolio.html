@@ -23,10 +23,10 @@
         <div class="gallery-grid">
             {% for event in events %}
             <div class="gallery-item" data-category="{{ event.category.name }}">
-                {% if event.video_url %}
+                {% if event.video_path %}
                 <div class="video-container">
                     <div class="video-thumbnail" data-video-id="video-{{ event.id }}">
-                        <img src="{{ event.image_url }}" alt="{{ event.title }}" class="img-fluid lazy" data-src="{{ event.image_url }}">
+                        <img src="{{ url_for('static', filename=event.image_path) }}" alt="{{ event.title }}" class="img-fluid lazy" data-src="{{ url_for('static', filename=event.image_path) }}">
                         <div class="play-overlay">
                             <i class="fas fa-play"></i>
                         </div>
@@ -36,13 +36,13 @@
                            controls
                            preload="none"
                            data-setup="{}"
-                           poster="{{ event.image_url }}">
-                        <source src="{{ event.video_url }}" type="video/mp4">
+                           poster="{{ url_for('static', filename=event.image_path) }}">
+                        <source src="{{ url_for('static', filename=event.video_path) }}" type="video/mp4">
                     </video>
                 </div>
                 {% else %}
-                <a href="{{ event.image_url }}" class="glightbox">
-                    <img src="{{ event.image_url }}" alt="{{ event.title }}" class="img-fluid lazy" data-src="{{ event.image_url }}">
+                <a href="{{ url_for('static', filename=event.image_path) }}" class="glightbox">
+                    <img src="{{ url_for('static', filename=event.image_path) }}" alt="{{ event.title }}" class="img-fluid lazy" data-src="{{ url_for('static', filename=event.image_path) }}">
                 </a>
                 {% endif %}
                 <div class="gallery-caption">

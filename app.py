@@ -28,12 +28,31 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 db.init_app(app)
 migrate = Migrate(app, db)
 
+def setup_upload_directories():
+    if not os.path.exists(app.static_folder):
+        os.makedirs(app.static_folder)
+    
+    upload_base = os.path.join(app.static_folder, 'uploads')
+    if not os.path.exists(upload_base):
+        os.makedirs(upload_base)
+    
+    for subdir in ['images', 'videos']:
+        path = os.path.join(upload_base, subdir)
+        if not os.path.exists(path):
+            os.makedirs(path)
+            
+    # Create placeholder if it doesn't exist
+    placeholder_path = os.path.join(app.static_folder, 'images')
+    if not os.path.exists(placeholder_path):
+        os.makedirs(placeholder_path)
+
 with app.app_context():
     import models
     import routes
     from admin_routes import admin
     app.register_blueprint(admin)
     db.create_all()
+    setup_upload_directories()
     
     # Create admin user if it doesn't exist
     from models import User

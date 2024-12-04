@@ -46,11 +46,15 @@
         <h2 class="text-center mb-5">Featured Events</h2>
         <div class="gallery-grid">
             {% for event in events %}
-            <div class="gallery-item" data-category="{{ event.category }}">
-                <img src="{{ event.image_url }}" alt="{{ event.title }}" class="img-fluid lazy" data-src="{{ event.image_url }}">
+            <div class="gallery-item" data-category="{{ event.category.name }}">
+                {% if event.image_path %}
+                <img src="{{ url_for('static', filename=event.image_path) }}" alt="{{ event.title }}" class="img-fluid lazy" data-src="{{ url_for('static', filename=event.image_path) }}">
+                {% else %}
+                <img src="{{ url_for('static', filename='images/placeholder.svg') }}" alt="{{ event.title }}" class="img-fluid">
+                {% endif %}
                 <div class="gallery-overlay">
                     <h4>{{ event.title }}</h4>
-                    <p>{{ event.category }}</p>
+                    <p>{{ event.category.name }}</p>
                 </div>
             </div>
             {% endfor %}

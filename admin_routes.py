@@ -1,5 +1,7 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+import os
+from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_user, logout_user, login_required, current_user
+from werkzeug.utils import secure_filename
 from app import db
 from models import User, Event, Category
 
@@ -42,13 +44,33 @@ def new_event():
             flash('Please select a valid category')
             return render_template('admin/event_form.html', categories=categories)
         
-        event = Event(
-            title=request.form.get('title'),
-            category_id=category_id,
-            description=request.form.get('description'),
-            image_url=request.form.get('image_url'),
-            video_url=request.form.get('video_url')
-        )
+        try:
+            # Handle image upload
+            image = request.files['image']
+            Event.validate_image(image)
+            image_filename = secure_filename(image.filename)
+            image_path = os.path.join('uploads', 'images', image_filename)
+            image.save(os.path.join(current_app.static_folder, image_path))
+
+            # Handle optional video upload
+            video_path = None
+            if 'video' in request.files and request.files['video'].filename:
+                video = request.files['video']
+                Event.validate_video(video)
+                video_filename = secure_filename(video.filename)
+                video_path = os.path.join('uploads', 'videos', video_filename)
+                video.save(os.path.join(current_app.static_folder, video_path))
+
+            event = Event(
+                title=request.form.get('title'),
+                category_id=category_id,
+                description=request.form.get('description'),
+                image_path=image_path,
+                video_path=video_path
+            )
+        except ValueError as e:
+            flash(str(e))
+            return render_template('admin/event_form.html', categories=categories)
         db.session.add(event)
         db.session.commit()
         flash('Event created successfully')
@@ -72,11 +94,42 @@ def edit_event(id):
             flash('Please select a valid category')
             return render_template('admin/event_form.html', event=event, categories=categories)
             
-        event.title = request.form.get('title')
-        event.category_id = category_id
-        event.description = request.form.get('description')
-        event.image_url = request.form.get('image_url')
-        event.video_url = request.form.get('video_url')
+        try:
+            event.title = request.form.get('title')
+            event.category_id = category_id
+            event.description = request.form.get('description')
+
+            # Handle image upload if new image is provided
+            if 'image' in request.files and request.files['image'].filename:
+                image = request.files['image']
+                Event.validate_image(image)
+                image_filename = secure_filename(image.filename)
+                image_path = os.path.join('uploads', 'images', image_filename)
+                image.save(os.path.join(current_app.static_folder, image_path))
+                # Remove old image if exists
+                if event.image_path:
+                    old_image_path = os.path.join(current_app.static_folder, event.image_path)
+                    if os.path.exists(old_image_path):
+                        os.remove(old_image_path)
+                event.image_path = image_path
+
+            # Handle video upload if new video is provided
+            if 'video' in request.files and request.files['video'].filename:
+                video = request.files['video']
+                Event.validate_video(video)
+                video_filename = secure_filename(video.filename)
+                video_path = os.path.join('uploads', 'videos', video_filename)
+                video.save(os.path.join(current_app.static_folder, video_path))
+                # Remove old video if exists
+                if event.video_path:
+                    old_video_path = os.path.join(current_app.static_folder, event.video_path)
+                    if os.path.exists(old_video_path):
+                        os.remove(old_video_path)
+                event.video_path = video_path
+
+        except ValueError as e:
+            flash(str(e))
+            return render_template('admin/event_form.html', event=event, categories=categories)
         db.session.commit()
         flash('Event updated successfully')
         return redirect(url_for('admin.dashboard'))
