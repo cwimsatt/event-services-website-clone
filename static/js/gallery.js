@@ -1,11 +1,15 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize Masonry
     const grid = document.querySelector('.gallery-grid');
-    const masonry = new Masonry(grid, {
-        itemSelector: '.gallery-item',
-        columnWidth: '.gallery-item',
-        percentPosition: true
-    });
+    
+    if (grid) {
+        // Wait for images to load before initializing Masonry
+        imagesLoaded(grid, function() {
+            const masonry = new Masonry(grid, {
+                itemSelector: '.gallery-item',
+                columnWidth: '.gallery-item',
+                percentPosition: true
+            });
 
     // Initialize lightbox
     const lightbox = GLightbox({
@@ -39,7 +43,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Re-layout Masonry
             masonry.layout();
         });
-    });
+    }
+});
 
     // Lazy loading
     const lazyImages = document.querySelectorAll('.lazy');
