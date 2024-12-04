@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container services-page py-5 mt-5">
+    <!-- Services Header -->
+    <div class="text-center mb-5">
+        <h1>Our Services</h1>
+        <p class="lead">Curated experiences for every special moment</p>
+    </div>
+
+    <!-- Main Services -->
+    <div class="row mb-5">
+        <div class="col-md-4">
+            <div class="service-box p-4 text-center">
+                <i class="fas fa-ring fa-3x mb-3"></i>
+                <h3>Weddings</h3>
+                <p>From intimate ceremonies to grand celebrations, we create unforgettable wedding experiences.</p>
+                <ul class="list-unstyled">
+                    <li>Full-service planning</li>
+                    <li>Day-of coordination</li>
+                    <li>Vendor management</li>
+                    <li>Design and styling</li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="service-box p-4 text-center">
+                <i class="fas fa-building fa-3x mb-3"></i>
+                <h3>Corporate Events</h3>
+                <p>Professional event planning for business functions and corporate gatherings.</p>
+                <ul class="list-unstyled">
+                    <li>Conferences and seminars</li>
+                    <li>Product launches</li>
+                    <li>Team building events</li>
+                    <li>Holiday parties</li>
+                </ul>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="service-box p-4 text-center">
+                <i class="fas fa-glass-cheers fa-3x mb-3"></i>
+                <h3>Social Events</h3>
+                <p>Creating memorable celebrations for life's special moments.</p>
+                <ul class="list-unstyled">
+                    <li>Birthday parties</li>
+                    <li>Anniversary celebrations</li>
+                    <li>Baby showers</li>
+                    <li>Milestone events</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Packages -->
+    <h2 class="text-center mb-4">Service Packages</h2>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="pricing-box p-4">
+                <h3 class="text-center">Essential</h3>
+                <div class="price text-center mb-3">
+                    <span class="amount">$2,500</span>
+                    <span class="period">Starting at</span>
+                </div>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check me-2"></i>Initial consultation</li>
+                    <li><i class="fas fa-check me-2"></i>Day-of coordination</li>
+                    <li><i class="fas fa-check me-2"></i>Timeline creation</li>
+                    <li><i class="fas fa-check me-2"></i>Vendor recommendations</li>
+                </ul>
+                <div class="text-center mt-4">
+                    <a href="{{ url_for('contact') }}" class="btn btn-outline-primary">Get Started</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="pricing-box p-4 featured">
+                <h3 class="text-center">Premium</h3>
+                <div class="price text-center mb-3">
+                    <span class="amount">$5,000</span>
+                    <span class="period">Starting at</span>
+                </div>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check me-2"></i>All Essential features</li>
+                    <li><i class="fas fa-check me-2"></i>Full planning services</li>
+                    <li><i class="fas fa-check me-2"></i>Design consultation</li>
+                    <li><i class="fas fa-check me-2"></i>Vendor coordination</li>
+                    <li><i class="fas fa-check me-2"></i>Budget management</li>
+                </ul>
+                <div class="text-center mt-4">
+                    <a href="{{ url_for('contact') }}" class="btn btn-primary">Get Started</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="pricing-box p-4">
+                <h3 class="text-center">Luxury</h3>
+                <div class="price text-center mb-3">
+                    <span class="amount">$10,000</span>
+                    <span class="period">Starting at</span>
+                </div>
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check me-2"></i>All Premium features</li>
+                    <li><i class="fas fa-check me-2"></i>Custom design services</li>
+                    <li><i class="fas fa-check me-2"></i>Full-service planning</li>
+                    <li><i class="fas fa-check me-2"></i>On-site coordination team</li>
+                    <li><i class="fas fa-check me-2"></i>VIP vendor access</li>
+                </ul>
+                <div class="text-center mt-4">
+                    <a href="{{ url_for('contact') }}" class="btn btn-outline-primary">Get Started</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Services -->
+    <div class="additional-services mt-5">
+        <h2 class="text-center mb-4">Additional Services</h2>
+        <div class="row">
+            <div class="col-md-6">
+                <div class="service-item p-3">
+                    <h4><i class="fas fa-camera me-2"></i>Photography & Videography</h4>
+                    <p>Professional documentation of your special event through our trusted partners.</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="service-item p-3">
+                    <h4><i class="fas fa-utensils me-2"></i>Catering Services</h4>
+                    <p>Curated menus and beverage services from premium local vendors.</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="service-item p-3">
+                    <h4><i class="fas fa-music me-2"></i>Entertainment</h4>
+                    <p>Live music, DJs, and other entertainment options for your event.</p>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="service-item p-3">
+                    <h4><i class="fas fa-flower me-2"></i>Decor & Styling</h4>
+                    <p>Custom floral arrangements and event styling to match your vision.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

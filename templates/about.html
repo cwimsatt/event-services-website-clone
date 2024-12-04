@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container about-page py-5 mt-5">
+    <div class="row align-items-center mb-5">
+        <div class="col-md-6">
+            <h1>About Us</h1>
+            <p class="lead">We create extraordinary events that leave lasting impressions</p>
+            <p>With years of experience in the event planning industry, our team brings creativity, attention to detail, and passionate dedication to every event we organize. We believe in creating unique, personalized experiences that reflect our clients' vision and exceed their expectations.</p>
+        </div>
+        <div class="col-md-6">
+            <img src="{{ url_for('static', filename='images/about-hero.jpg') }}" alt="Our Team" class="img-fluid rounded">
+        </div>
+    </div>
+
+    <!-- Our Values -->
+    <div class="values-section py-5">
+        <h2 class="text-center mb-5">Our Values</h2>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="value-card text-center">
+                    <i class="fas fa-heart fa-3x mb-3"></i>
+                    <h3>Passion</h3>
+                    <p>We pour our hearts into every event, ensuring each detail is perfect</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="value-card text-center">
+                    <i class="fas fa-star fa-3x mb-3"></i>
+                    <h3>Excellence</h3>
+                    <p>We strive for excellence in every aspect of our service</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="value-card text-center">
+                    <i class="fas fa-handshake fa-3x mb-3"></i>
+                    <h3>Trust</h3>
+                    <p>Building lasting relationships through reliability and transparency</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Section -->
+    <div class="team-section py-5">
+        <h2 class="text-center mb-5">Meet Our Team</h2>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="team-member text-center">
+                    <img src="{{ url_for('static', filename='images/team-1.jpg') }}" alt="Team Member" class="img-fluid rounded-circle mb-3">
+                    <h4>Sarah Johnson</h4>
+                    <p class="text-muted">Creative Director</p>
+                    <p>With over 10 years of experience in event planning, Sarah leads our creative vision.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="team-member text-center">
+                    <img src="{{ url_for('static', filename='images/team-2.jpg') }}" alt="Team Member" class="img-fluid rounded-circle mb-3">
+                    <h4>Michael Chen</h4>
+                    <p class="text-muted">Event Coordinator</p>
+                    <p>Michael ensures flawless execution of every event detail.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="team-member text-center">
+                    <img src="{{ url_for('static', filename='images/team-3.jpg') }}" alt="Team Member" class="img-fluid rounded-circle mb-3">
+                    <h4>Emma Rodriguez</h4>
+                    <p class="text-muted">Design Specialist</p>
+                    <p>Emma brings events to life through innovative design concepts.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
