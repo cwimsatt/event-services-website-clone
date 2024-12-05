@@ -28,6 +28,9 @@
         <div class="mb-3">
             <label for="image" class="form-label">Event Image</label>
             <input type="file" class="form-control" id="image" name="image" accept=".jpg,.jpeg,.png" {% if not event %}required{% endif %}>
+            <div id="imagePreview" class="mt-2 preview-container" style="display: none;">
+                <img src="" alt="Image preview" class="img-fluid" style="max-height: 200px;">
+            </div>
             {% if event and event.image_path %}
             <div class="mt-2 d-flex align-items-center">
                 <small class="text-muted me-2">Current image: {{ event.image_path }}</small>
@@ -54,6 +57,12 @@
         <div class="mb-3">
             <label for="video" class="form-label">Event Video (optional)</label>
             <input type="file" class="form-control" id="video" name="video" accept=".mp4">
+            <div id="videoPreview" class="mt-2 preview-container" style="display: none;">
+                <video controls style="max-height: 200px;">
+                    <source src="" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
             {% if event and event.video_path %}
             <div class="mt-2 d-flex align-items-center">
                 <small class="text-muted me-2">Current video: {{ event.video_path }}</small>
@@ -77,18 +86,53 @@
             </div>
         </div>
 
+        <style>
+            .preview-container {
+                border: 1px solid #ddd;
+                padding: 10px;
+                border-radius: 4px;
+                background: #f8f9fa;
+            }
+        </style>
+
         <script>
             document.getElementById('image').addEventListener('change', function() {
-                if (this.files[0].size > 10 * 1024 * 1024) {
-                    alert('Image file size exceeds 10MB limit');
-                    this.value = '';
+                if (this.files[0]) {
+                    if (this.files[0].size > 10 * 1024 * 1024) {
+                        alert('Image file size exceeds 10MB limit');
+                        this.value = '';
+                        return;
+                    }
+
+                    const preview = document.getElementById('imagePreview');
+                    const img = preview.querySelector('img');
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        img.src = e.target.result;
+                        preview.style.display = 'block';
+                    }
+                    reader.readAsDataURL(this.files[0]);
                 }
             });
 
             document.getElementById('video').addEventListener('change', function() {
-                if (this.files[0] && this.files[0].size > 50 * 1024 * 1024) {
-                    alert('Video file size exceeds 50MB limit');
-                    this.value = '';
+                if (this.files[0]) {
+                    if (this.files[0].size > 50 * 1024 * 1024) {
+                        alert('Video file size exceeds 50MB limit');
+                        this.value = '';
+                        return;
+                    }
+
+                    const preview = document.getElementById('videoPreview');
+                    const video = preview.querySelector('video');
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        video.src = e.target.result;
+                        preview.style.display = 'block';
+                    }
+                    reader.readAsDataURL(this.files[0]);
                 }
             });
         </script>
