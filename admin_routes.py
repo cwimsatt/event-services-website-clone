@@ -19,14 +19,25 @@ def dashboard():
 @admin.route('/admin/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
+        current_app.logger.info(f"User {current_user.username} already authenticated, redirecting to dashboard")
         return redirect(url_for('admin.dashboard'))
 
     if request.method == 'POST':
-        user = User.query.filter_by(username=request.form.get('username')).first()
+        username = request.form.get('username')
+        current_app.logger.info(f"Login attempt for user: {username}")
+        
+        user = User.query.filter_by(username=username).first()
         if user and user.check_password(request.form.get('password')):
-            login_user(user)
-            return redirect(url_for('admin.dashboard'))
-        flash('Invalid username or password')
+            if user.is_admin:
+                current_app.logger.info(f"Admin user {username} authenticated successfully")
+                login_user(user)
+                return redirect(url_for('admin.dashboard'))
+            else:
+                current_app.logger.warning(f"Non-admin user {username} attempted to access admin area")
+                flash('Access denied. Admin privileges required.')
+        else:
+            current_app.logger.warning(f"Failed login attempt for user: {username}")
+            flash('Invalid username or password')
     return render_template('admin/login.html')
 
 @admin.route('/admin/logout')

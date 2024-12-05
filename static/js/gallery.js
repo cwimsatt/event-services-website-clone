@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function() {
-    let masonry = null;
     const grid = document.querySelector('.gallery-grid');
     
     if (!grid) {
@@ -7,37 +6,35 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
     
-    // Handle errors gracefully
-    const handleError = function(error) {
-        console.error('Gallery initialization error:', error);
-        // Fallback to basic grid layout if Masonry fails
-        if (grid) {
-            grid.style.display = 'grid';
-            grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
-            grid.style.gap = '1rem';
-        }
-    };
-
-    // Initialize Masonry with proper configuration
-    const initMasonry = function() {
+    // Initialize Masonry layout
+    const initializeMasonry = function() {
+        console.log('Initializing gallery with Masonry...');
         try {
             if (typeof Masonry !== 'function') {
                 throw new Error('Masonry library not loaded');
             }
-            return new Masonry(grid, {
+
+            const masonry = new Masonry(grid, {
                 itemSelector: '.gallery-item',
                 columnWidth: '.gallery-item',
                 percentPosition: true,
                 transitionDuration: '0.3s'
             });
+
+            console.log('Masonry initialized successfully');
+            return masonry;
         } catch (error) {
-            handleError(error);
+            console.error('Gallery initialization error:', error);
+            // Fallback to basic grid layout
+            grid.style.display = 'grid';
+            grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
+            grid.style.gap = '1rem';
             return null;
         }
     };
 
     // Initialize filtering functionality
-    const initializeFilters = function(masonryInstance) {
+    const initializeFilters = function(masonry) {
         const filterButtons = document.querySelectorAll('.filter-btn');
         const items = document.querySelectorAll('.gallery-item');
         
@@ -66,15 +63,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
 
                 // Re-layout Masonry after filtering
-                if (masonryInstance) {
-                    setTimeout(() => masonryInstance.layout(), 100);
+                if (masonry) {
+                    setTimeout(() => masonry.layout(), 100);
                 }
             });
         });
+        console.log('Filters initialized');
     };
 
     // Initialize lazy loading
-    const initializeLazyLoading = function(masonryInstance) {
+    const initializeLazyLoading = function(masonry) {
         const lazyImages = document.querySelectorAll('img.lazy');
         
         if (!lazyImages.length) return;
@@ -90,8 +88,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         // Update layout after image loads
                         img.addEventListener('load', () => {
-                            if (masonryInstance) {
-                                masonryInstance.layout();
+                            if (masonry) {
+                                masonry.layout();
                             }
                         });
                     }
@@ -104,31 +102,25 @@ document.addEventListener('DOMContentLoaded', function() {
         });
 
         lazyImages.forEach(img => imageObserver.observe(img));
+        console.log('Lazy loading initialized');
     };
 
-    // Initialize gallery
-    const initializeGallery = () => {
-        if (!grid) return;
-        
-        // Wait for images to load before initializing Masonry
-        if (typeof imagesLoaded === 'function') {
-            imagesLoaded(grid, function() {
-                masonry = initMasonry();
-                if (masonry) {
-                    initializeFilters(masonry);
-                    initializeLazyLoading(masonry);
-                }
-            });
-        } else {
-            console.warn('imagesLoaded not available, falling back to direct initialization');
-            masonry = initMasonry();
+    // Wait for images to load before initializing
+    if (typeof imagesLoaded === 'function') {
+        console.log('Using imagesLoaded for initialization');
+        imagesLoaded(grid, function() {
+            const masonry = initializeMasonry();
             if (masonry) {
                 initializeFilters(masonry);
                 initializeLazyLoading(masonry);
             }
+        });
+    } else {
+        console.warn('imagesLoaded not available, falling back to direct initialization');
+        const masonry = initializeMasonry();
+        if (masonry) {
+            initializeFilters(masonry);
+            initializeLazyLoading(masonry);
         }
-    };
-
-    // Start initialization
-    initializeGallery();
+    }
 });

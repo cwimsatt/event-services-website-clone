@@ -47,6 +47,10 @@
                     <a href="{{ url_for('admin.dashboard') }}" class="btn btn-primary btn-sm me-2">Admin Dashboard</a>
                     <a href="{{ url_for('admin.logout') }}" class="btn btn-outline-secondary btn-sm">Logout</a>
                 </div>
+                {% else %}
+                <div class="admin-controls">
+                    <a href="{{ url_for('admin.login') }}" class="btn btn-primary btn-sm">Admin Login</a>
+                </div>
                 {% endif %}
             </div>
         </div>

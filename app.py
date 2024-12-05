@@ -1,9 +1,14 @@
 import os
+import logging
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 from flask_login import LoginManager
 from flask_migrate import Migrate
+
+# Setup logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 class Base(DeclarativeBase):
     pass
@@ -66,9 +71,14 @@ with app.app_context():
     
     # Create admin user if it doesn't exist
     from models import User
+    logger.info("Checking for admin user existence...")
     admin_user = User.query.filter_by(username='admin').first()
     if not admin_user:
+        logger.info("Creating admin user...")
         admin_user = User(username='admin', email='admin@example.com', is_admin=True)
         admin_user.set_password('admin')  # Default password, should be changed
         db.session.add(admin_user)
         db.session.commit()
+        logger.info("Admin user created successfully with admin privileges enabled")
+    else:
+        logger.info("Admin user already exists")
