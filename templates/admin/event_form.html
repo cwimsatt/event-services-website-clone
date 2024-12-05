@@ -31,6 +31,9 @@
             <div id="imagePreview" class="mt-2 preview-container" style="display: none;">
                 <img src="" alt="Image preview" class="img-fluid" style="max-height: 200px;">
             </div>
+            <div id="imageInfo" class="mt-2" style="display: none;">
+                <small class="text-muted">Selected file: <span class="filename"></span></small>
+            </div>
             {% if event and event.image_path %}
             <div class="mt-2 d-flex align-items-center">
                 <small class="text-muted me-2">Current image: {{ event.image_path }}</small>
@@ -62,6 +65,9 @@
                     <source src="" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
+            </div>
+            <div id="videoInfo" class="mt-2" style="display: none;">
+                <small class="text-muted">Selected file: <span class="filename"></span></small>
             </div>
             {% if event and event.video_path %}
             <div class="mt-2 d-flex align-items-center">
@@ -138,6 +144,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log('Image file selected:', file.name);
                 console.log('Image file size:', (file.size / (1024 * 1024)).toFixed(2) + 'MB');
                 
+                const fileInfo = document.getElementById('imageInfo');
+                if (fileInfo) {
+                    fileInfo.querySelector('.filename').textContent = file.name;
+                    fileInfo.style.display = 'block';
+                }
+                
                 if (file.size > 10 * 1024 * 1024) {
                     alert('Image file size exceeds 10MB limit');
                     this.value = '';
@@ -184,6 +196,12 @@ document.addEventListener('DOMContentLoaded', function() {
             if (file) {
                 console.log('Video file selected:', file.name);
                 console.log('Video file size:', (file.size / (1024 * 1024)).toFixed(2) + 'MB');
+                
+                const fileInfo = document.getElementById('videoInfo');
+                if (fileInfo) {
+                    fileInfo.querySelector('.filename').textContent = file.name;
+                    fileInfo.style.display = 'block';
+                }
                 
                 if (file.size > 50 * 1024 * 1024) {
                     alert('Video file size exceeds 50MB limit');
