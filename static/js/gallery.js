@@ -1,10 +1,13 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Only initialize gallery on pages that have the gallery-grid
     const grid = document.querySelector('.gallery-grid');
-    
     if (!grid) {
         console.warn('Gallery grid not found in the document');
+        // This is not a gallery page, exit gracefully
         return;
     }
+    
+    console.log('Gallery grid found, initializing...');
     
     // Initialize Masonry layout
     const initializeMasonry = function() {

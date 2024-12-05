@@ -107,10 +107,26 @@
 
 {% block extra_js %}
 <script>
+// Wait for DOM to be fully loaded
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM Content loaded, initializing form handlers...');
+    
+    // Ensure all required elements are present before initialization
+    const formElements = {
+        imageInput: document.getElementById('image'),
+        imagePreview: document.getElementById('imagePreview'),
+        videoInput: document.getElementById('video'),
+        videoPreview: document.getElementById('videoPreview')
+    };
+    
+    // Log availability of form elements
+    Object.entries(formElements).forEach(([key, element]) => {
+        console.log(`${key} found:`, !!element);
+    });
+
     // Image preview
-    const imageInput = document.getElementById('image');
-    const imagePreview = document.getElementById('imagePreview');
+    const imageInput = formElements.imageInput;
+    const imagePreview = formElements.imagePreview;
     
     console.log('Image input found:', !!imageInput);
     console.log('Image preview container found:', !!imagePreview);
@@ -130,10 +146,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const img = imagePreview.querySelector('img');
-                    img.src = e.target.result;
-                    imagePreview.style.display = 'block';
-                    console.log('Image preview displayed');
+                    try {
+                        const img = imagePreview.querySelector('img');
+                        if (!img) {
+                            throw new Error('Image preview element not found');
+                        }
+                        img.src = e.target.result;
+                        imagePreview.style.display = 'block';
+                        console.log('Image preview displayed successfully');
+                    } catch (error) {
+                        console.error('Error displaying image preview:', error);
+                        alert('Error displaying image preview. Please try again.');
+                    }
+                };
+                reader.onerror = function(error) {
+                    console.error('Error reading image file:', error);
+                    alert('Error reading image file. Please try again.');
                 };
                 reader.readAsDataURL(file);
             } else {
@@ -165,10 +193,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    const video = videoPreview.querySelector('video');
-                    video.src = e.target.result;
-                    videoPreview.style.display = 'block';
-                    console.log('Video preview displayed');
+                    try {
+                        const video = videoPreview.querySelector('video');
+                        if (!video) {
+                            throw new Error('Video preview element not found');
+                        }
+                        video.src = e.target.result;
+                        videoPreview.style.display = 'block';
+                        console.log('Video preview displayed successfully');
+                        
+                        // Add error handling for video loading
+                        video.onerror = function(error) {
+                            console.error('Error loading video preview:', error);
+                            alert('Error loading video preview. Please try a different file.');
+                            videoPreview.style.display = 'none';
+                        };
+                    } catch (error) {
+                        console.error('Error displaying video preview:', error);
+                        alert('Error displaying video preview. Please try again.');
+                    }
+                };
+                reader.onerror = function(error) {
+                    console.error('Error reading video file:', error);
+                    alert('Error reading video file. Please try again.');
                 };
                 reader.readAsDataURL(file);
             } else {
