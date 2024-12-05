@@ -9,27 +9,26 @@ def index():
     testimonials = Testimonial.query.limit(3).all()
     return render_template('index.html', events=featured_events, testimonials=testimonials)
 
+def ensure_image_exists(image_path):
+    if image_path:
+        full_path = os.path.join(current_app.static_folder, image_path)
+        return os.path.exists(full_path)
+    return False
+
 @app.route('/portfolio')
 def portfolio():
     categories = Category.query.all()
     category_id = request.args.get('category_id', 'all')
-    
-    current_app.logger.info("Loading portfolio images...")
     
     if category_id != 'all':
         events = Event.query.filter_by(category_id=category_id).all()
     else:
         events = Event.query.all()
     
-    # Debug log each event's image path and URL
+    # Check and log missing images
     for event in events:
-        current_app.logger.info(f"Event {event.title}:")
-        current_app.logger.info(f"  - Image path: {event.image_path}")
-        current_app.logger.info(f"  - Static folder: {current_app.static_folder}")
-        if event.image_path:
-            full_path = os.path.join(current_app.static_folder, event.image_path)
-            current_app.logger.info(f"  - Full path: {full_path}")
-            current_app.logger.info(f"  - Exists: {os.path.exists(full_path)}")
+        if event.image_path and not ensure_image_exists(event.image_path):
+            current_app.logger.warning(f"Missing image for event {event.title}: {event.image_path}")
     
     return render_template('portfolio.html', 
                          events=events, 
