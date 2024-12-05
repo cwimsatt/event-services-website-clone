@@ -62,6 +62,8 @@ with app.app_context():
     import models
     import routes
     import admin_views  # Import new admin views
+    from admin_routes import admin_bp  # Import admin blueprint
+    app.register_blueprint(admin_bp)  # Register the admin blueprint
     db.create_all()
     setup_upload_directories()
     

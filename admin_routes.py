@@ -5,9 +5,9 @@ from app import db
 from models import User, Event, Category
 from werkzeug.utils import secure_filename
 
-admin = Blueprint('admin', __name__)
+admin_bp = Blueprint('admin_custom', __name__)
 
-@admin.route('/admin')
+@admin_bp.route('/admin')
 @login_required
 def dashboard():
     if not current_user.is_admin:
