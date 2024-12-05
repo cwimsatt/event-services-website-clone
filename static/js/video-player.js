@@ -17,6 +17,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 videojs.getPlayers()[player.id].dispose();
             }
             
+            const sourceElement = player.querySelector('source');
+            if (!sourceElement || !sourceElement.src) {
+                console.warn(`No valid source found for player ${player.id}`);
+                return;
+            }
+            
             console.log(`Initializing player: ${player.id}`);
             videojs(player.id, {
                 controls: true,
@@ -26,13 +32,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 fluid: true,
                 playbackRates: [0.5, 1, 1.5, 2],
                 sources: [{
-                    src: player.querySelector('source').src,
+                    src: sourceElement.src,
                     type: 'video/mp4'
                 }]
-            }, function onPlayerReady() {
+            }).ready(function() {
                 console.log(`Player ${player.id} initialized successfully`);
                 initializedPlayers.add(player.id);
             });
+        } catch (error) {
+            console.error(`Error initializing video player ${player.id}:`, error);
+        }
+    });
 
     // Custom video thumbnail overlay with error handling
     const videoThumbnails = document.querySelectorAll('.video-thumbnail');

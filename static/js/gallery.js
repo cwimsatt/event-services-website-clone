@@ -112,27 +112,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Initialize everything with proper error handling
-        if (typeof imagesLoaded === 'function') {
+        const initializeGallery = () => {
+            try {
+                masonry = initMasonry();
+                console.log('Masonry initialized successfully');
+                initializeFilters(masonry);
+                console.log('Filters initialized');
+                initializeLazyLoading(masonry);
+                console.log('Lazy loading initialized');
+            } catch (error) {
+                console.error('Error during Masonry initialization:', error);
+                handleError(error);
+            }
+        };
+
+        if (typeof window.imagesLoaded === 'function') {
             console.log('Using imagesLoaded for initialization');
-            imagesLoaded(grid, function(instance) {
-                try {
-                    console.log(`Loaded ${instance.images.length} images`);
-                    masonry = initMasonry();
-                    console.log('Masonry initialized successfully');
-                    initializeFilters(masonry);
-                    console.log('Filters initialized');
-                    initializeLazyLoading(masonry);
-                    console.log('Lazy loading initialized');
-                } catch (error) {
-                    console.error('Error during Masonry initialization:', error);
-                    handleError(error);
-                }
+            window.imagesLoaded(grid, function(instance) {
+                console.log(`Loaded ${instance.images.length} images`);
+                initializeGallery();
             });
         } else {
             console.warn('imagesLoaded not available, falling back to direct initialization');
-            masonry = initMasonry();
-            initializeFilters(masonry);
-            initializeLazyLoading(masonry);
+            // Wait for all images to load naturally
+            window.addEventListener('load', initializeGallery);
         }
     } catch (error) {
         console.error('Critical gallery initialization error:', error);
