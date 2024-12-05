@@ -1,6 +1,6 @@
 from flask import render_template, request, flash, redirect, url_for
 from app import app, db
-from models import Event, Testimonial, Contact
+from models import Event, Testimonial, Contact, Category
 
 @app.route('/')
 def index():

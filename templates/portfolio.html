@@ -23,10 +23,11 @@
         <div class="gallery-grid">
             {% for event in events %}
             <div class="gallery-item" data-category="{{ event.category.name }}">
+                {% set image_path = event.image_path if event.image_path else 'images/placeholder.svg' %}
                 {% if event.video_path %}
                 <div class="video-container">
                     <div class="video-thumbnail" data-video-id="video-{{ event.id }}">
-                        <img src="{{ url_for('static', filename=event.image_path) }}" alt="{{ event.title }}" class="img-fluid lazy" data-src="{{ url_for('static', filename=event.image_path) }}">
+                        <img src="{{ url_for('static', filename=image_path) }}" alt="{{ event.title }}" class="img-fluid lazy" data-src="{{ url_for('static', filename=image_path) }}">
                         <div class="play-overlay">
                             <i class="fas fa-play"></i>
                         </div>
@@ -36,13 +37,13 @@
                            controls
                            preload="none"
                            data-setup="{}"
-                           poster="{{ url_for('static', filename=event.image_path) }}">
+                           poster="{{ url_for('static', filename=image_path) }}">
                         <source src="{{ url_for('static', filename=event.video_path) }}" type="video/mp4">
                     </video>
                 </div>
                 {% else %}
-                <a href="{{ url_for('static', filename=event.image_path) }}" class="glightbox">
-                    <img src="{{ url_for('static', filename=event.image_path) }}" alt="{{ event.title }}" class="img-fluid lazy" data-src="{{ url_for('static', filename=event.image_path) }}">
+                <a href="{{ url_for('static', filename=image_path) }}" class="glightbox">
+                    <img src="{{ url_for('static', filename=image_path) }}" alt="{{ event.title }}" class="img-fluid lazy" data-src="{{ url_for('static', filename=image_path) }}">
                 </a>
                 {% endif %}
                 <div class="gallery-caption">

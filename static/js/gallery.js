@@ -2,16 +2,29 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize Masonry
     const grid = document.querySelector('.gallery-grid');
     
-    if (grid) {
-        // Wait for all images to load before initializing Masonry
-        window.imagesLoaded(grid, function() {
-            const masonry = new Masonry(grid, {
-                itemSelector: '.gallery-item',
-                columnWidth: '.gallery-item',
-                percentPosition: true
-            });
+    if (!grid) return; // Exit if grid doesn't exist
+    
+    // Create a function to initialize Masonry
+    const initMasonry = function() {
+        const masonry = new Masonry(grid, {
+            itemSelector: '.gallery-item',
+            columnWidth: '.gallery-item',
+            percentPosition: true
+        });
+        return masonry;
+    };
 
-            // Initialize lightbox
+    // Check if imagesLoaded is available
+    if (typeof imagesLoaded === 'function') {
+        imagesLoaded(grid, function() {
+            const masonry = initMasonry();
+        });
+    } else {
+        console.warn('imagesLoaded not available, initializing Masonry directly');
+        const masonry = initMasonry();
+    }
+
+    // Initialize lightbox
             const lightbox = GLightbox({
                 selector: '.glightbox',
                 touchNavigation: true,
