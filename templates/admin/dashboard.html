@@ -31,10 +31,13 @@
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="sortable-events">
                 {% for event in events %}
-                <tr>
-                    <td>{{ '%.3f'|format(event.sequence) if event.sequence is not none else '0.000' }}</td>
+                <tr data-id="{{ event.id }}" data-sequence="{{ '%.3f'|format(event.sequence) if event.sequence is not none else '0.000' }}">
+                    <td class="sequence-handle" style="cursor: move;">
+                        <i class="fas fa-grip-vertical me-2"></i>
+                        {{ '%.3f'|format(event.sequence) if event.sequence is not none else '0.000' }}
+                    </td>
                     <td>{{ event.title }}</td>
                     <td>{{ event.category.name }}</td>
                     <td>{{ event.date.strftime('%Y-%m-%d') }}</td>
@@ -47,6 +50,69 @@
                 </tr>
                 {% endfor %}
             </tbody>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tbody = document.getElementById('sortable-events');
+    
+    // Initialize Sortable
+    new Sortable(tbody, {
+        handle: '.sequence-handle',
+        animation: 150,
+        onEnd: function() {
+            const rows = tbody.getElementsByTagName('tr');
+            const sequences = {};
+            
+            // Calculate new sequences
+            Array.from(rows).forEach((row, index) => {
+                const id = row.dataset.id;
+                const currentSeq = parseFloat(row.dataset.sequence);
+                let newSeq;
+                
+                if (index === 0) {
+                    // First item: use current sequence - 1
+                    newSeq = currentSeq > 1 ? currentSeq - 1 : 0.5;
+                } else if (index === rows.length - 1) {
+                    // Last item: use current sequence + 1
+                    const prevSeq = parseFloat(rows[index - 1].dataset.sequence);
+                    newSeq = prevSeq + 1;
+                } else {
+                    // Middle items: average of previous and next
+                    const prevSeq = parseFloat(rows[index - 1].dataset.sequence);
+                    const nextSeq = parseFloat(rows[index + 1].dataset.sequence);
+                    newSeq = prevSeq + (nextSeq - prevSeq) / 2;
+                }
+                
+                sequences[id] = newSeq;
+                row.querySelector('.sequence-handle').textContent = newSeq.toFixed(3);
+                row.dataset.sequence = newSeq.toFixed(3);
+            });
+            
+            // Send update to server
+            fetch('/admin/event/update-sequence', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify(sequences)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert('Error updating sequences: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error updating sequences. Please try again.');
+            });
+        }
+    });
+});
+</script>
+{% endblock %}
         </table>
     </div>
 </div>
