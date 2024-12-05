@@ -30,12 +30,15 @@ import os
 from werkzeug.utils import secure_filename
 
 ALLOWED_IMAGE_EXTENSIONS = {'jpg', 'jpeg', 'png'}
-ALLOWED_VIDEO_EXTENSIONS = {'mp4'}
+ALLOWED_VIDEO_EXTENSIONS = {'mp4', 'mov', 'avi', 'wmv'}  # Extended video formats
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+MAX_VIDEO_SIZE = 50 * 1024 * 1024  # 50MB
 
 def allowed_file(filename, allowed_extensions):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in allowed_extensions
+    if not filename or '.' not in filename:
+        return False
+    extension = filename.rsplit('.', 1)[1].lower()
+    return extension in allowed_extensions
 
 class Event(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -61,9 +64,9 @@ class Event(db.Model):
         if not file:
             return True  # Video is optional
         if not allowed_file(file.filename, ALLOWED_VIDEO_EXTENSIONS):
-            raise ValueError("Invalid video format. Allowed format: mp4")
-        if file.content_length and file.content_length > MAX_FILE_SIZE * 5:  # 50MB for videos
-            raise ValueError(f"File size exceeds maximum limit of {MAX_FILE_SIZE*5 // (1024*1024)}MB")
+            raise ValueError(f"Invalid video format. Allowed formats: {', '.join(ALLOWED_VIDEO_EXTENSIONS)}")
+        if file.content_length and file.content_length > MAX_VIDEO_SIZE:
+            raise ValueError(f"Video file size exceeds maximum limit of {MAX_VIDEO_SIZE // (1024*1024)}MB")
         return True
 
 class Testimonial(db.Model):

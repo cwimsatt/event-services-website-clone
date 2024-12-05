@@ -150,6 +150,36 @@ def delete_event(id):
     return redirect(url_for('admin.dashboard'))
 
 @admin.route('/admin/logout')
+@admin.route('/admin/event/<int:id>/delete-file/<file_type>', methods=['POST'])
+@login_required
+def delete_file(id, file_type):
+    if not current_user.is_admin:
+        flash('Access denied. Admin privileges required.')
+        return redirect(url_for('index'))
+    
+    event = Event.query.get_or_404(id)
+    
+    try:
+        if file_type == 'image':
+            if event.image_path:
+                file_path = os.path.join(current_app.static_folder, event.image_path)
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                event.image_path = None
+                flash('Image deleted successfully')
+        elif file_type == 'video':
+            if event.video_path:
+                file_path = os.path.join(current_app.static_folder, event.video_path)
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                event.video_path = None
+                flash('Video deleted successfully')
+        
+        db.session.commit()
+    except Exception as e:
+        flash(f'Error deleting file: {str(e)}', 'error')
+    
+    return redirect(url_for('admin.edit_event', id=id))
 @login_required
 def logout():
     logout_user()

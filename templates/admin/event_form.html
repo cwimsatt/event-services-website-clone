@@ -29,22 +29,52 @@
             <label for="image" class="form-label">Event Image</label>
             <input type="file" class="form-control" id="image" name="image" accept=".jpg,.jpeg,.png" {% if not event %}required{% endif %}>
             {% if event and event.image_path %}
-            <div class="mt-2">
-                <small class="text-muted">Current image: {{ event.image_path }}</small>
+            <div class="mt-2 d-flex align-items-center">
+                <small class="text-muted me-2">Current image: {{ event.image_path }}</small>
+                <form action="{{ url_for('admin.delete_file', id=event.id, file_type='image') }}" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this image?')">
+                        <i class="fas fa-trash"></i> Delete Image
+                    </button>
+                </form>
             </div>
             {% endif %}
-            <small class="text-muted">Max size: 10MB. Allowed formats: JPG, JPEG, PNG</small>
+            <div class="alert alert-info mt-2">
+                <small>
+                    <i class="fas fa-info-circle"></i>
+                    File Requirements:
+                    <ul class="mb-0">
+                        <li>Maximum size: 10MB</li>
+                        <li>Allowed formats: JPG, JPEG, PNG</li>
+                        <li>Recommended dimensions: 1200x800 pixels</li>
+                    </ul>
+                </small>
+            </div>
         </div>
         
         <div class="mb-3">
             <label for="video" class="form-label">Event Video (optional)</label>
             <input type="file" class="form-control" id="video" name="video" accept=".mp4">
             {% if event and event.video_path %}
-            <div class="mt-2">
-                <small class="text-muted">Current video: {{ event.video_path }}</small>
+            <div class="mt-2 d-flex align-items-center">
+                <small class="text-muted me-2">Current video: {{ event.video_path }}</small>
+                <form action="{{ url_for('admin.delete_file', id=event.id, file_type='video') }}" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this video?')">
+                        <i class="fas fa-trash"></i> Delete Video
+                    </button>
+                </form>
             </div>
             {% endif %}
-            <small class="text-muted">Max size: 50MB. Allowed format: MP4</small>
+            <div class="alert alert-info mt-2">
+                <small>
+                    <i class="fas fa-info-circle"></i>
+                    File Requirements:
+                    <ul class="mb-0">
+                        <li>Maximum size: 50MB</li>
+                        <li>Allowed formats: MP4, MOV, AVI, WMV</li>
+                        <li>Recommended resolution: 1080p or lower</li>
+                    </ul>
+                </small>
+            </div>
         </div>
 
         <script>
