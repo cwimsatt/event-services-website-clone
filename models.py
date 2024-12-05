@@ -54,6 +54,7 @@ class Event(db.Model):
     def image_url(self):
         if self.image_path and os.path.exists(os.path.join(current_app.static_folder, self.image_path)):
             return url_for('static', filename=self.image_path)
+        current_app.logger.error(f"Image not found for event {self.title}: {self.image_path}")
         return url_for('static', filename='images/placeholder.svg')
 
     @staticmethod

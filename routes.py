@@ -13,7 +13,6 @@ def portfolio():
     categories = Category.query.all()
     category_id = request.args.get('category_id', 'all')
     
-    # Log image paths for debugging
     current_app.logger.info("Loading portfolio images...")
     
     if category_id != 'all':
@@ -21,9 +20,15 @@ def portfolio():
     else:
         events = Event.query.all()
     
-    # Debug log each event's image path
+    # Debug log each event's image path and URL
     for event in events:
-        current_app.logger.info(f"Event {event.title}: Image path = {event.image_path}")
+        current_app.logger.info(f"Event {event.title}:")
+        current_app.logger.info(f"  - Image path: {event.image_path}")
+        current_app.logger.info(f"  - Static folder: {current_app.static_folder}")
+        if event.image_path:
+            full_path = os.path.join(current_app.static_folder, event.image_path)
+            current_app.logger.info(f"  - Full path: {full_path}")
+            current_app.logger.info(f"  - Exists: {os.path.exists(full_path)}")
     
     return render_template('portfolio.html', 
                          events=events, 
