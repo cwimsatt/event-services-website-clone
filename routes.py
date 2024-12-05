@@ -12,11 +12,23 @@ def index():
 def portfolio():
     categories = Category.query.all()
     category_id = request.args.get('category_id', 'all')
+    
+    # Log image paths for debugging
+    current_app.logger.info("Loading portfolio images...")
+    
     if category_id != 'all':
         events = Event.query.filter_by(category_id=category_id).all()
     else:
         events = Event.query.all()
-    return render_template('portfolio.html', events=events, categories=categories, active_category=category_id)
+    
+    # Debug log each event's image path
+    for event in events:
+        current_app.logger.info(f"Event {event.title}: Image path = {event.image_path}")
+    
+    return render_template('portfolio.html', 
+                         events=events, 
+                         categories=categories, 
+                         active_category=category_id)
 
 @app.route('/about')
 def about():

@@ -43,7 +43,10 @@
                 </div>
                 {% else %}
                 <a href="{{ image_path }}" class="glightbox">
-                    <img src="{{ image_path }}" alt="{{ event.title }}" class="img-fluid lazy" data-src="{{ image_path }}">
+                    <img src="{{ image_path }}" 
+                         alt="{{ event.title }}" 
+                         class="img-fluid lazy" 
+                         data-src="{{ image_path }}">
                 </a>
                 {% endif %}
                 <div class="gallery-caption">

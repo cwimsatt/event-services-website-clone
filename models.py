@@ -2,7 +2,7 @@ from app import db
 from datetime import datetime
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask import url_for
+from flask import url_for, current_app
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -52,7 +52,7 @@ class Event(db.Model):
     
     @property
     def image_url(self):
-        if self.image_path:
+        if self.image_path and os.path.exists(os.path.join(current_app.static_folder, self.image_path)):
             return url_for('static', filename=self.image_path)
         return url_for('static', filename='images/placeholder.svg')
 
