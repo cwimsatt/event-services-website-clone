@@ -14,21 +14,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Validate video source
     function validateVideoSource(sourceElement) {
         if (!sourceElement || !sourceElement.src) {
-            return null;
+            return false;
         }
         
-        // Check if the source file exists
-        return new Promise((resolve) => {
-            const xhr = new XMLHttpRequest();
-            xhr.open('HEAD', sourceElement.src, true);
-            xhr.onload = function() {
-                resolve(xhr.status === 200 ? sourceElement.src : null);
-            };
-            xhr.onerror = function() {
-                resolve(null);
-            };
-            xhr.send();
-        });
+        const validTypes = ['video/mp4', 'video/webm', 'video/ogg'];
+        return validTypes.includes(sourceElement.type);
     }
     
     // Cleanup existing players before initialization
@@ -62,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function() {
             cleanupExistingPlayer(player.id);
             
             const sourceElement = player.querySelector('source');
-            const validSource = await validateVideoSource(sourceElement);
+            const validSource = validateVideoSource(sourceElement);
             
             if (!validSource) {
                 console.warn(`No valid source found for player ${player.id}`);
@@ -75,26 +65,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            console.log(`Initializing player: ${player.id}`);
-            videojs(player.id, {
+            const playerOptions = {
                 controls: true,
                 autoplay: false,
                 preload: 'auto',
                 responsive: true,
                 fluid: true,
-                playbackRates: [0.5, 1, 1.5, 2],
                 sources: [{
                     src: sourceElement.src,
-                    type: 'video/mp4'
+                    type: sourceElement.type || 'video/mp4'
                 }]
-            }).ready(function() {
-                console.log(`Player ${player.id} initialized successfully`);
-                initializedPlayers.add(player.id);
-            });
+            };
+            
+            if (!videojs.getPlayers()[player.id]) {
+                videojs(player.id, playerOptions, function() {
+                    console.log(`Player ${player.id} initialized successfully`);
+                    initializedPlayers.add(player.id);
+                });
+            }
         } catch (error) {
             console.error(`Error initializing video player ${player.id}:`, error);
+            showVideoFallback(player);
         }
     });
+
+    function showVideoFallback(player) {
+        const fallbackMsg = document.createElement('div');
+        fallbackMsg.className = 'video-fallback';
+        fallbackMsg.innerHTML = '<p>Error loading video</p>';
+        player.parentNode.insertBefore(fallbackMsg, player);
+        player.style.display = 'none';
+    }
 
     // Custom video thumbnail overlay with error handling
     const videoThumbnails = document.querySelectorAll('.video-thumbnail');
@@ -114,9 +115,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 this.style.display = 'none';
-                player.play();
+                player.play().catch(error => {
+                    console.error('Error playing video:', error);
+                    this.style.display = 'block';
+                });
             } catch (error) {
-                console.error('Error playing video:', error);
+                console.error('Error handling thumbnail click:', error);
+                this.style.display = 'block';
             }
         });
     });
