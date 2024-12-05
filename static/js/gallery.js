@@ -106,24 +106,36 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     try {
+        console.log('Initializing gallery with Masonry...');
+        if (typeof Masonry !== 'function') {
+            throw new Error('Masonry library not loaded');
+        }
+
         // Initialize everything with proper error handling
         if (typeof imagesLoaded === 'function') {
-            imagesLoaded(grid, function() {
+            console.log('Using imagesLoaded for initialization');
+            imagesLoaded(grid, function(instance) {
                 try {
+                    console.log(`Loaded ${instance.images.length} images`);
                     masonry = initMasonry();
+                    console.log('Masonry initialized successfully');
                     initializeFilters(masonry);
+                    console.log('Filters initialized');
                     initializeLazyLoading(masonry);
+                    console.log('Lazy loading initialized');
                 } catch (error) {
+                    console.error('Error during Masonry initialization:', error);
                     handleError(error);
                 }
             });
         } else {
-            console.warn('imagesLoaded not available, initializing Masonry directly');
+            console.warn('imagesLoaded not available, falling back to direct initialization');
             masonry = initMasonry();
             initializeFilters(masonry);
             initializeLazyLoading(masonry);
         }
     } catch (error) {
+        console.error('Critical gallery initialization error:', error);
         handleError(error);
     }
 });
