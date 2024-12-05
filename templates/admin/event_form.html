@@ -95,47 +95,7 @@
             }
         </style>
 
-        <script>
-            document.getElementById('image').addEventListener('change', function() {
-                if (this.files[0]) {
-                    if (this.files[0].size > 10 * 1024 * 1024) {
-                        alert('Image file size exceeds 10MB limit');
-                        this.value = '';
-                        return;
-                    }
-
-                    const preview = document.getElementById('imagePreview');
-                    const img = preview.querySelector('img');
-                    
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        img.src = e.target.result;
-                        preview.style.display = 'block';
-                    }
-                    reader.readAsDataURL(this.files[0]);
-                }
-            });
-
-            document.getElementById('video').addEventListener('change', function() {
-                if (this.files[0]) {
-                    if (this.files[0].size > 50 * 1024 * 1024) {
-                        alert('Video file size exceeds 50MB limit');
-                        this.value = '';
-                        return;
-                    }
-
-                    const preview = document.getElementById('videoPreview');
-                    const video = preview.querySelector('video');
-                    
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        video.src = e.target.result;
-                        preview.style.display = 'block';
-                    }
-                    reader.readAsDataURL(this.files[0]);
-                }
-            });
-        </script>
+        
         
         <div class="mb-3">
             <button type="submit" class="btn btn-primary">Save Event</button>
@@ -143,4 +103,80 @@
         </div>
     </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Image preview
+    const imageInput = document.getElementById('image');
+    const imagePreview = document.getElementById('imagePreview');
+    
+    console.log('Image input found:', !!imageInput);
+    console.log('Image preview container found:', !!imagePreview);
+    
+    if (imageInput && imagePreview) {
+        imageInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                console.log('Image file selected:', file.name);
+                console.log('Image file size:', (file.size / (1024 * 1024)).toFixed(2) + 'MB');
+                
+                if (file.size > 10 * 1024 * 1024) {
+                    alert('Image file size exceeds 10MB limit');
+                    this.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = imagePreview.querySelector('img');
+                    img.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                    console.log('Image preview displayed');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                imagePreview.style.display = 'none';
+                console.log('Image preview hidden');
+            }
+        });
+    }
+
+    // Video preview
+    const videoInput = document.getElementById('video');
+    const videoPreview = document.getElementById('videoPreview');
+    
+    console.log('Video input found:', !!videoInput);
+    console.log('Video preview container found:', !!videoPreview);
+    
+    if (videoInput && videoPreview) {
+        videoInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                console.log('Video file selected:', file.name);
+                console.log('Video file size:', (file.size / (1024 * 1024)).toFixed(2) + 'MB');
+                
+                if (file.size > 50 * 1024 * 1024) {
+                    alert('Video file size exceeds 50MB limit');
+                    this.value = '';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const video = videoPreview.querySelector('video');
+                    video.src = e.target.result;
+                    videoPreview.style.display = 'block';
+                    console.log('Video preview displayed');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                videoPreview.style.display = 'none';
+                console.log('Video preview hidden');
+            }
+        });
+    }
+});
+</script>
 {% endblock %}
