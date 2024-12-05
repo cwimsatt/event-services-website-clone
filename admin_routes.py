@@ -14,8 +14,24 @@ def dashboard():
     if not current_user.is_admin:
         flash('Access denied. Admin privileges required.', 'danger')
         return redirect(url_for('index'))
-    events = Event.query.order_by(Event.sequence.nullslast(), Event.date.desc()).all()
-    return render_template('admin/dashboard.html', events=events)
+    
+    categories = Category.query.order_by(Category.name).all()
+    category_id = request.args.get('category', 'all')
+    
+    query = Event.query
+    
+    if category_id != 'all':
+        try:
+            category_id = int(category_id)
+            query = query.filter_by(category_id=category_id).order_by(Event.sequence.nullslast(), Event.date.desc())
+        except (ValueError, TypeError):
+            category_id = 'all'
+    else:
+        # If 'all' is selected, sort by category name then sequence
+        query = query.join(Category).order_by(Category.name, Event.sequence.nullslast(), Event.date.desc())
+    
+    events = query.all()
+    return render_template('admin/dashboard.html', events=events, categories=categories)
 
 @admin_bp.route('/admin/login', methods=['GET', 'POST'])
 def login():
