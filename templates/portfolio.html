@@ -68,16 +68,4 @@
 {% endblock %}
 
 {% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Masonry after images are loaded
-    imagesLoaded('.gallery-grid', function() {
-        const masonry = new Masonry('.gallery-grid', {
-            itemSelector: '.gallery-item',
-            columnWidth: '.gallery-item',
-            percentPosition: true
-        });
-    });
-});
-</script>
 {% endblock %}

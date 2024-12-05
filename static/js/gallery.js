@@ -1,30 +1,39 @@
 document.addEventListener('DOMContentLoaded', function() {
-    try {
-        const grid = document.querySelector('.gallery-grid');
-        if (!grid) {
-            console.warn('Gallery grid not found in the document');
-            return;
-        }
-
-        let masonry = null;
-        
-        // Initialize Masonry with proper configuration and error handling
-        const initMasonry = function() {
-            try {
-                if (typeof Masonry !== 'function') {
-                    throw new Error('Masonry library not loaded');
-                }
-                return new Masonry(grid, {
-                    itemSelector: '.gallery-item',
-                    columnWidth: '.gallery-item',
-                    percentPosition: true,
-                    transitionDuration: '0.3s'
-                });
-            } catch (error) {
-                console.error('Error initializing Masonry:', error);
-                return null;
+    let masonry = null;
+    const grid = document.querySelector('.gallery-grid');
+    
+    if (!grid) {
+        console.warn('Gallery grid not found in the document');
+        return;
+    }
+    
+    // Initialize Masonry with proper configuration and error handling
+    const initMasonry = function() {
+        try {
+            if (typeof Masonry !== 'function') {
+                throw new Error('Masonry library not loaded');
             }
-        };
+            return new Masonry(grid, {
+                itemSelector: '.gallery-item',
+                columnWidth: '.gallery-item',
+                percentPosition: true,
+                transitionDuration: '0.3s'
+            });
+        } catch (error) {
+            console.error('Error initializing Masonry:', error);
+            handleError(error);
+            return null;
+        }
+    };
+
+    // Handle errors gracefully
+    const handleError = function(error) {
+        console.error('Gallery initialization error:', error);
+        // Fallback to basic grid layout if Masonry fails
+        grid.style.display = 'grid';
+        grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
+        grid.style.gap = '1rem';
+    };
 
     // Initialize lightbox if GLightbox is available
     if (typeof GLightbox === 'function') {

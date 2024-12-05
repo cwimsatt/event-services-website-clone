@@ -11,6 +11,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const videoPlayers = document.querySelectorAll('.video-js');
     const initializedPlayers = new Set();
     
+    // Validate video source
+    function validateVideoSource(sourceElement) {
+        if (!sourceElement || !sourceElement.src) {
+            return null;
+        }
+        
+        // Check if the source file exists
+        return new Promise((resolve) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open('HEAD', sourceElement.src, true);
+            xhr.onload = function() {
+                resolve(xhr.status === 200 ? sourceElement.src : null);
+            };
+            xhr.onerror = function() {
+                resolve(null);
+            };
+            xhr.send();
+        });
+    }
+    
     // Cleanup existing players before initialization
     function cleanupExistingPlayer(playerId) {
         try {
@@ -25,10 +45,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    videoPlayers.forEach(player => {
+    videoPlayers.forEach(async (player) => {
         try {
             if (!player.id) {
                 console.warn('Skipping player initialization: Missing ID');
+                return;
+            }
+
+            // Prevent duplicate initialization
+            if (initializedPlayers.has(player.id)) {
+                console.warn(`Player ${player.id} already initialized`);
                 return;
             }
 
@@ -36,8 +62,16 @@ document.addEventListener('DOMContentLoaded', function() {
             cleanupExistingPlayer(player.id);
             
             const sourceElement = player.querySelector('source');
-            if (!sourceElement || !sourceElement.src) {
+            const validSource = await validateVideoSource(sourceElement);
+            
+            if (!validSource) {
                 console.warn(`No valid source found for player ${player.id}`);
+                // Show fallback content
+                const fallbackMsg = document.createElement('div');
+                fallbackMsg.className = 'video-fallback';
+                fallbackMsg.innerHTML = '<p>Video unavailable</p>';
+                player.parentNode.insertBefore(fallbackMsg, player);
+                player.style.display = 'none';
                 return;
             }
             

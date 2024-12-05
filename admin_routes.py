@@ -82,18 +82,23 @@ def new_event():
             return render_template('admin/event_form.html', categories=categories)
 
         try:
-            # Ensure upload directories exist
+            # Ensure upload directories exist with proper permissions
             upload_base = os.path.join(current_app.static_folder, 'uploads')
             images_dir = os.path.join(upload_base, 'images')
             videos_dir = os.path.join(upload_base, 'videos')
             
             for directory in [upload_base, images_dir, videos_dir]:
-                if not os.path.exists(directory):
-                    try:
+                try:
+                    if not os.path.exists(directory):
                         os.makedirs(directory, mode=0o755)
-                    except OSError as e:
-                        flash(f'Error creating upload directory: {str(e)}')
-                        return render_template('admin/event_form.html', categories=categories)
+                    else:
+                        # Verify directory permissions
+                        current_mode = os.stat(directory).st_mode & 0o777
+                        if current_mode != 0o755:
+                            os.chmod(directory, 0o755)
+                except OSError as e:
+                    flash(f'Error managing upload directory {directory}: {str(e)}')
+                    return render_template('admin/event_form.html', categories=categories)
 
             # Handle image upload with improved validation
             try:
