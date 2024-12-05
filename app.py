@@ -5,6 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 from flask_login import LoginManager
 from flask_migrate import Migrate
+from flask_wtf.csrf import CSRFProtect
 
 # Setup logging
 logging.basicConfig(level=logging.DEBUG)
@@ -15,6 +16,7 @@ class Base(DeclarativeBase):
 
 db = SQLAlchemy(model_class=Base)
 login_manager = LoginManager()
+csrf = CSRFProtect()
 app = Flask(__name__)
 
 @login_manager.user_loader
@@ -25,6 +27,7 @@ def load_user(user_id):
 login_manager.init_app(app)
 login_manager.login_view = 'admin_custom.login'
 app.secret_key = os.environ.get("FLASK_SECRET_KEY") or "a secret key"
+csrf.init_app(app)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///events.db")
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
