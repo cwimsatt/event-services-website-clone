@@ -11,9 +11,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const handleError = function(error) {
         console.error('Gallery initialization error:', error);
         // Fallback to basic grid layout if Masonry fails
-        grid.style.display = 'grid';
-        grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
-        grid.style.gap = '1rem';
+        if (grid) {
+            grid.style.display = 'grid';
+            grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
+            grid.style.gap = '1rem';
+        }
     };
 
     // Initialize Masonry with proper configuration and error handling
@@ -33,20 +35,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return null;
         }
     };
-
-    // Initialize lightbox if GLightbox is available
-    try {
-        if (typeof GLightbox === 'function') {
-            const lightbox = GLightbox({
-                selector: '.glightbox',
-                touchNavigation: true,
-                loop: true,
-                autoplayVideos: true
-            });
-        }
-    } catch (error) {
-        console.error('Error initializing lightbox:', error);
-    }
 
     // Initialize filtering functionality
     const initializeFilters = function(masonryInstance) {
@@ -128,38 +116,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // Initialize gallery with proper error handling
-    const initializeGallery = () => {
-        try {
-            if (grid) {
+    // Initialize gallery
+    try {
+        if (typeof imagesLoaded === 'undefined') {
+            console.warn('imagesLoaded not available, falling back to direct initialization');
+            initMasonry();
+            initializeFilters(masonry);
+            initializeLazyLoading(masonry);
+        } else {
+            imagesLoaded(grid, function() {
                 masonry = initMasonry();
-                console.log('Masonry initialized successfully');
                 initializeFilters(masonry);
                 initializeLazyLoading(masonry);
-            }
-        } catch (error) {
-            handleError(error);
-        }
-    };
-
-    try {
-        console.log('Initializing gallery with Masonry...');
-        if (typeof Masonry !== 'function') {
-            throw new Error('Masonry library not loaded');
-        }
-
-        // Check for imagesLoaded availability
-        if (typeof imagesLoaded === 'function') {
-            console.log('Using imagesLoaded for initialization');
-            imagesLoaded(grid, function() {
-                initializeGallery();
             });
-        } else {
-            console.warn('imagesLoaded not available, falling back to direct initialization');
-            window.addEventListener('load', initializeGallery);
         }
     } catch (error) {
-        console.error('Critical gallery initialization error:', error);
         handleError(error);
     }
 });
