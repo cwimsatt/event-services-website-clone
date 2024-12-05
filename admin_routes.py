@@ -4,6 +4,7 @@ from flask_login import login_user, logout_user, login_required, current_user
 from app import db
 from models import User, Event, Category
 from werkzeug.utils import secure_filename
+from decimal import Decimal
 
 admin_bp = Blueprint('admin_custom', __name__)
 
@@ -155,7 +156,9 @@ def new_event():
             try:
                 if sequence and sequence.strip():
                     try:
-                        sequence = round(float(sequence), 3)
+                        current_app.logger.debug(f"Raw sequence value: {sequence}")
+                        sequence = float(Decimal(sequence))
+                        current_app.logger.debug(f"Converted sequence value: {sequence}")
                         current_app.logger.info(f"New event sequence value set to: {sequence}")
                     except ValueError:
                         current_app.logger.error(f"Invalid sequence value for new event (not a number): {sequence}")
@@ -225,7 +228,9 @@ def edit_event(id):
             try:
                 if sequence and sequence.strip():
                     try:
-                        event.sequence = round(float(sequence), 3)
+                        current_app.logger.debug(f"Raw sequence value: {sequence}")
+                        event.sequence = float(Decimal(sequence))
+                        current_app.logger.debug(f"Converted sequence value: {event.sequence}")
                         current_app.logger.info(f"Sequence value set to: {event.sequence}")
                     except ValueError:
                         current_app.logger.error(f"Invalid sequence value (not a number): {sequence}")
