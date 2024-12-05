@@ -26,6 +26,12 @@
         </div>
         
         <div class="mb-3">
+            <label for="sequence" class="form-label">Display Sequence</label>
+            <input type="number" class="form-control" id="sequence" name="sequence" value="{{ event.sequence if event else '' }}" placeholder="Enter display order number">
+            <small class="form-text text-muted">Lower numbers will be displayed first. Leave empty for default ordering.</small>
+        </div>
+        
+        <div class="mb-3">
             <label for="image" class="form-label">Event Image</label>
             <input type="file" class="form-control" id="image" name="image" accept=".jpg,.jpeg,.png" {% if not event %}required{% endif %}>
             <div id="imagePreview" class="mt-2 preview-container" style="display: none;">

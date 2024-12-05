@@ -150,12 +150,16 @@ def new_event():
                     flash(f'Error uploading video: {str(e)}')
                     return render_template('admin/event_form.html', categories=categories)
 
+            sequence = request.form.get('sequence')
+            sequence = int(sequence) if sequence and sequence.strip() else None
+            
             event = Event(
                 title=request.form.get('title'),
                 category_id=category_id,
                 description=request.form.get('description'),
                 image_path=image_path,
-                video_path=video_path
+                video_path=video_path,
+                sequence=sequence
             )
         except ValueError as e:
             flash(str(e))
@@ -187,6 +191,9 @@ def edit_event(id):
             event.title = request.form.get('title')
             event.category_id = category_id
             event.description = request.form.get('description')
+            
+            sequence = request.form.get('sequence')
+            event.sequence = int(sequence) if sequence and sequence.strip() else None
 
             # Handle image upload if new image is provided
             if 'image' in request.files and request.files['image'].filename:
