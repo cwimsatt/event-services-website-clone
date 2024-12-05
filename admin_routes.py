@@ -150,8 +150,24 @@ def new_event():
                     flash(f'Error uploading video: {str(e)}')
                     return render_template('admin/event_form.html', categories=categories)
 
+            # Handle sequence field
             sequence = request.form.get('sequence')
-            sequence = float(sequence) if sequence and sequence.strip() else None
+            try:
+                if sequence and sequence.strip():
+                    try:
+                        sequence = float(sequence)
+                        current_app.logger.info(f"New event sequence value set to: {sequence}")
+                    except ValueError:
+                        current_app.logger.error(f"Invalid sequence value for new event (not a number): {sequence}")
+                        flash('Please enter a valid number for sequence (e.g., 1.5, 2.3)', 'danger')
+                        return render_template('admin/event_form.html', categories=categories)
+                else:
+                    sequence = None
+                    current_app.logger.info("New event sequence value set to None (empty)")
+            except Exception as e:
+                current_app.logger.error(f"Error processing sequence for new event: {str(e)}")
+                flash('An error occurred while processing the sequence value', 'danger')
+                return render_template('admin/event_form.html', categories=categories)
             
             event = Event(
                 title=request.form.get('title'),
@@ -207,11 +223,20 @@ def edit_event(id):
             # Handle sequence field
             sequence = request.form.get('sequence')
             try:
-                event.sequence = float(sequence) if sequence and sequence.strip() else None
-                current_app.logger.info(f"Sequence value set to: {event.sequence}")
-            except ValueError as e:
-                current_app.logger.error(f"Invalid sequence value: {sequence}, Error: {str(e)}")
-                flash('Invalid sequence number provided', 'danger')
+                if sequence and sequence.strip():
+                    try:
+                        event.sequence = float(sequence)
+                        current_app.logger.info(f"Sequence value set to: {event.sequence}")
+                    except ValueError:
+                        current_app.logger.error(f"Invalid sequence value (not a number): {sequence}")
+                        flash('Please enter a valid number for sequence (e.g., 1.5, 2.3)', 'danger')
+                        return render_template('admin/event_form.html', event=event, categories=categories)
+                else:
+                    event.sequence = None
+                    current_app.logger.info("Sequence value set to None (empty)")
+            except Exception as e:
+                current_app.logger.error(f"Error processing sequence: {str(e)}")
+                flash('An error occurred while processing the sequence value', 'danger')
                 return render_template('admin/event_form.html', event=event, categories=categories)
 
             # Handle image upload if new image is provided
