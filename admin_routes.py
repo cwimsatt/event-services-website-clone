@@ -1,26 +1,13 @@
 import os
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_user, logout_user, login_required, current_user
-from werkzeug.utils import secure_filename
 from app import db
 from models import User, Event, Category
+from werkzeug.utils import secure_filename
 
 admin = Blueprint('admin', __name__)
 
-@admin.route('/admin/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        user = User.query.filter_by(username=username).first()
-        
-        if user and user.check_password(password) and user.is_admin:
-            login_user(user)
-            return redirect(url_for('admin.dashboard'))
-        flash('Invalid username or password')
-    return render_template('admin/login.html')
-
-@admin.route('/admin/dashboard')
+@admin.route('/admin')
 @login_required
 def dashboard():
     if not current_user.is_admin:
@@ -29,21 +16,71 @@ def dashboard():
     events = Event.query.all()
     return render_template('admin/dashboard.html', events=events)
 
+@admin.route('/admin/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('admin.dashboard'))
+
+    if request.method == 'POST':
+        user = User.query.filter_by(username=request.form.get('username')).first()
+        if user and user.check_password(request.form.get('password')):
+            login_user(user)
+            return redirect(url_for('admin.dashboard'))
+        flash('Invalid username or password')
+    return render_template('admin/login.html')
+
+@admin.route('/admin/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('index'))
+
+@admin.route('/admin/event/<int:id>/delete-file/<file_type>', methods=['POST'])
+@login_required
+def delete_file(id, file_type):
+    if not current_user.is_admin:
+        flash('Access denied. Admin privileges required.')
+        return redirect(url_for('index'))
+
+    event = Event.query.get_or_404(id)
+
+    try:
+        if file_type == 'image':
+            if event.image_path:
+                file_path = os.path.join(current_app.static_folder, event.image_path)
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                event.image_path = None
+                flash('Image deleted successfully')
+        elif file_type == 'video':
+            if event.video_path:
+                file_path = os.path.join(current_app.static_folder, event.video_path)
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                event.video_path = None
+                flash('Video deleted successfully')
+
+        db.session.commit()
+    except Exception as e:
+        flash(f'Error deleting file: {str(e)}', 'error')
+
+    return redirect(url_for('admin.edit_event', id=id))
+
 @admin.route('/admin/event/new', methods=['GET', 'POST'])
 @login_required
 def new_event():
     if not current_user.is_admin:
         flash('Access denied. Admin privileges required.')
         return redirect(url_for('index'))
-    
+
     categories = Category.query.all()
-    
+
     if request.method == 'POST':
         category_id = request.form.get('category_id')
         if not category_id or not Category.query.get(category_id):
             flash('Please select a valid category')
             return render_template('admin/event_form.html', categories=categories)
-        
+
         try:
             # Handle image upload
             image = request.files['image']
@@ -75,7 +112,7 @@ def new_event():
         db.session.commit()
         flash('Event created successfully')
         return redirect(url_for('admin.dashboard'))
-    
+
     return render_template('admin/event_form.html', categories=categories)
 
 @admin.route('/admin/event/<int:id>/edit', methods=['GET', 'POST'])
@@ -84,16 +121,16 @@ def edit_event(id):
     if not current_user.is_admin:
         flash('Access denied. Admin privileges required.')
         return redirect(url_for('index'))
-    
+
     event = Event.query.get_or_404(id)
     categories = Category.query.all()
-    
+
     if request.method == 'POST':
         category_id = request.form.get('category_id')
         if not category_id or not Category.query.get(category_id):
             flash('Please select a valid category')
             return render_template('admin/event_form.html', event=event, categories=categories)
-            
+
         try:
             event.title = request.form.get('title')
             event.category_id = category_id
@@ -133,7 +170,7 @@ def edit_event(id):
         db.session.commit()
         flash('Event updated successfully')
         return redirect(url_for('admin.dashboard'))
-    
+
     return render_template('admin/event_form.html', event=event, categories=categories)
 
 @admin.route('/admin/event/<int:id>/delete', methods=['POST'])
@@ -142,48 +179,13 @@ def delete_event(id):
     if not current_user.is_admin:
         flash('Access denied. Admin privileges required.')
         return redirect(url_for('index'))
-    
+
     event = Event.query.get_or_404(id)
     db.session.delete(event)
     db.session.commit()
     flash('Event deleted successfully')
     return redirect(url_for('admin.dashboard'))
 
-@admin.route('/admin/logout')
-@admin.route('/admin/event/<int:id>/delete-file/<file_type>', methods=['POST'])
-@login_required
-def delete_file(id, file_type):
-    if not current_user.is_admin:
-        flash('Access denied. Admin privileges required.')
-        return redirect(url_for('index'))
-    
-    event = Event.query.get_or_404(id)
-    
-    try:
-        if file_type == 'image':
-            if event.image_path:
-                file_path = os.path.join(current_app.static_folder, event.image_path)
-                if os.path.exists(file_path):
-                    os.remove(file_path)
-                event.image_path = None
-                flash('Image deleted successfully')
-        elif file_type == 'video':
-            if event.video_path:
-                file_path = os.path.join(current_app.static_folder, event.video_path)
-                if os.path.exists(file_path):
-                    os.remove(file_path)
-                event.video_path = None
-                flash('Video deleted successfully')
-        
-        db.session.commit()
-    except Exception as e:
-        flash(f'Error deleting file: {str(e)}', 'error')
-    
-    return redirect(url_for('admin.edit_event', id=id))
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for('index'))
 
 @admin.route('/admin/categories')
 @login_required
@@ -200,7 +202,7 @@ def new_category():
     if not current_user.is_admin:
         flash('Access denied. Admin privileges required.')
         return redirect(url_for('index'))
-    
+
     if request.method == 'POST':
         category = Category(
             name=request.form.get('name'),
@@ -211,7 +213,7 @@ def new_category():
         db.session.commit()
         flash('Category created successfully')
         return redirect(url_for('admin.list_categories'))
-    
+
     return render_template('admin/category_form.html')
 
 @admin.route('/admin/category/<int:id>/edit', methods=['GET', 'POST'])
@@ -220,7 +222,7 @@ def edit_category(id):
     if not current_user.is_admin:
         flash('Access denied. Admin privileges required.')
         return redirect(url_for('index'))
-    
+
     category = Category.query.get_or_404(id)
     if request.method == 'POST':
         category.name = request.form.get('name')
@@ -229,7 +231,7 @@ def edit_category(id):
         db.session.commit()
         flash('Category updated successfully')
         return redirect(url_for('admin.list_categories'))
-    
+
     return render_template('admin/category_form.html', category=category)
 
 @admin.route('/admin/category/<int:id>/delete', methods=['POST'])
@@ -238,12 +240,12 @@ def delete_category(id):
     if not current_user.is_admin:
         flash('Access denied. Admin privileges required.')
         return redirect(url_for('index'))
-    
+
     category = Category.query.get_or_404(id)
     if Event.query.filter_by(category_id=category.id).first():
         flash('Cannot delete category that has events')
         return redirect(url_for('admin.list_categories'))
-    
+
     db.session.delete(category)
     db.session.commit()
     flash('Category deleted successfully')
