@@ -1,8 +1,29 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Initializing video players...');
+    
+    // Validate videojs availability
+    if (typeof videojs !== 'function') {
+        console.error('Video.js library not loaded');
+        return;
+    }
+
     // Initialize Video.js players with enhanced error handling
     const videoPlayers = document.querySelectorAll('.video-js');
     const initializedPlayers = new Set();
+    
+    // Cleanup existing players before initialization
+    function cleanupExistingPlayer(playerId) {
+        try {
+            const existingPlayer = videojs.getPlayers()[playerId];
+            if (existingPlayer) {
+                existingPlayer.pause();
+                existingPlayer.dispose();
+                console.log(`Successfully disposed player: ${playerId}`);
+            }
+        } catch (error) {
+            console.error(`Error disposing player ${playerId}:`, error);
+        }
+    }
     
     videoPlayers.forEach(player => {
         try {
@@ -11,11 +32,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Check if player instance already exists
-            if (videojs.getPlayers()[player.id]) {
-                console.log(`Disposing existing player instance for ${player.id}`);
-                videojs.getPlayers()[player.id].dispose();
-            }
+            // Cleanup existing player instance
+            cleanupExistingPlayer(player.id);
             
             const sourceElement = player.querySelector('source');
             if (!sourceElement || !sourceElement.src) {

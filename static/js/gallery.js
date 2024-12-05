@@ -1,18 +1,30 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const grid = document.querySelector('.gallery-grid');
-    if (!grid) return;
+    try {
+        const grid = document.querySelector('.gallery-grid');
+        if (!grid) {
+            console.warn('Gallery grid not found in the document');
+            return;
+        }
 
-    let masonry;
-    
-    // Initialize Masonry with proper configuration
-    const initMasonry = function() {
-        return new Masonry(grid, {
-            itemSelector: '.gallery-item',
-            columnWidth: '.gallery-item',
-            percentPosition: true,
-            transitionDuration: '0.3s'
-        });
-    };
+        let masonry = null;
+        
+        // Initialize Masonry with proper configuration and error handling
+        const initMasonry = function() {
+            try {
+                if (typeof Masonry !== 'function') {
+                    throw new Error('Masonry library not loaded');
+                }
+                return new Masonry(grid, {
+                    itemSelector: '.gallery-item',
+                    columnWidth: '.gallery-item',
+                    percentPosition: true,
+                    transitionDuration: '0.3s'
+                });
+            } catch (error) {
+                console.error('Error initializing Masonry:', error);
+                return null;
+            }
+        };
 
     // Initialize lightbox if GLightbox is available
     if (typeof GLightbox === 'function') {

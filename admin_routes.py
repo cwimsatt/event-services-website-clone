@@ -82,21 +82,46 @@ def new_event():
             return render_template('admin/event_form.html', categories=categories)
 
         try:
-            # Handle image upload
-            image = request.files['image']
-            Event.validate_image(image)
-            image_filename = secure_filename(image.filename)
-            image_path = os.path.join('uploads', 'images', image_filename)
-            image.save(os.path.join(current_app.static_folder, image_path))
+            # Ensure upload directories exist
+            upload_base = os.path.join(current_app.static_folder, 'uploads')
+            images_dir = os.path.join(upload_base, 'images')
+            videos_dir = os.path.join(upload_base, 'videos')
+            
+            for directory in [upload_base, images_dir, videos_dir]:
+                if not os.path.exists(directory):
+                    try:
+                        os.makedirs(directory, mode=0o755)
+                    except OSError as e:
+                        flash(f'Error creating upload directory: {str(e)}')
+                        return render_template('admin/event_form.html', categories=categories)
 
-            # Handle optional video upload
+            # Handle image upload with improved validation
+            try:
+                image = request.files['image']
+                Event.validate_image(image)
+                image_filename = secure_filename(image.filename)
+                image_path = os.path.join('uploads', 'images', image_filename)
+                full_image_path = os.path.join(current_app.static_folder, image_path)
+                image.save(full_image_path)
+                os.chmod(full_image_path, 0o644)  # Set proper file permissions
+            except (ValueError, OSError) as e:
+                flash(f'Error uploading image: {str(e)}')
+                return render_template('admin/event_form.html', categories=categories)
+
+            # Handle optional video upload with improved validation
             video_path = None
             if 'video' in request.files and request.files['video'].filename:
-                video = request.files['video']
-                Event.validate_video(video)
-                video_filename = secure_filename(video.filename)
-                video_path = os.path.join('uploads', 'videos', video_filename)
-                video.save(os.path.join(current_app.static_folder, video_path))
+                try:
+                    video = request.files['video']
+                    Event.validate_video(video)
+                    video_filename = secure_filename(video.filename)
+                    video_path = os.path.join('uploads', 'videos', video_filename)
+                    full_video_path = os.path.join(current_app.static_folder, video_path)
+                    video.save(full_video_path)
+                    os.chmod(full_video_path, 0o644)  # Set proper file permissions
+                except (ValueError, OSError) as e:
+                    flash(f'Error uploading video: {str(e)}')
+                    return render_template('admin/event_form.html', categories=categories)
 
             event = Event(
                 title=request.form.get('title'),

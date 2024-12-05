@@ -23,11 +23,20 @@
         <div class="gallery-grid">
             {% for event in events %}
             <div class="gallery-item" data-category="{{ event.category.name }}">
-                {% set image_path = url_for('static', filename=event.image_path if event.image_path else 'images/placeholder.svg') %}
+                {% if event.image_path %}
+                    {% set image_path = url_for('static', filename=event.image_path) %}
+                {% else %}
+                    {% set image_path = url_for('static', filename='images/placeholder.svg') %}
+                {% endif %}
+                
                 {% if event.video_path %}
                 <div class="video-container">
                     <div class="video-thumbnail" data-video-id="video-{{ event.id }}">
-                        <img src="{{ image_path }}" alt="{{ event.title }}" class="img-fluid lazy" data-src="{{ image_path }}">
+                        <img src="{{ image_path }}" 
+                             alt="{{ event.title }}" 
+                             class="img-fluid lazy" 
+                             data-src="{{ image_path }}"
+                             onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/placeholder.svg') }}';">
                         <div class="play-overlay">
                             <i class="fas fa-play"></i>
                         </div>
