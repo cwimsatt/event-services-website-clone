@@ -246,10 +246,16 @@ def edit_event(id):
                         os.remove(old_video_path)
                 event.video_path = video_path
 
-            db.session.commit()
-            current_app.logger.info(f"Event {id} updated successfully")
-            flash('Event updated successfully', 'success')
-            return redirect(url_for('admin_custom.dashboard'))
+            try:
+                db.session.commit()
+                current_app.logger.info(f"Event {id} updated successfully")
+                flash('Event updated successfully', 'success')
+                return redirect(url_for('admin_custom.dashboard'))
+            except Exception as e:
+                db.session.rollback()
+                current_app.logger.error(f"Database error while updating event {id}: {str(e)}")
+                flash('Database error occurred while saving the event', 'danger')
+                return render_template('admin/event_form.html', event=event, categories=categories)
 
         except ValueError as e:
             current_app.logger.error(f"Error updating event {id}: {str(e)}")
