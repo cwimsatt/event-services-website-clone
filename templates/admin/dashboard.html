@@ -34,7 +34,7 @@
             <tbody>
                 {% for event in events %}
                 <tr>
-                    <td>{{ event.sequence if event.sequence is not none else 0 }}</td>
+                    <td>{{ '%.3f'|format(event.sequence) if event.sequence is not none else '0.000' }}</td>
                     <td>{{ event.title }}</td>
                     <td>{{ event.category.name }}</td>
                     <td>{{ event.date.strftime('%Y-%m-%d') }}</td>
