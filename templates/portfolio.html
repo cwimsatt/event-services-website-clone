@@ -31,9 +31,8 @@
                 
                 {% if event.video_path %}
                 <div class="video-container">
-                    <div class="video-thumbnail" data-video-id="video-{{ event.id }}">
-                        <img src="{{ image_path }}" 
-                             alt="{{ event.title }}" 
+                    <div class="video-thumbnail">
+                        <img src="{{ image_path }}" alt="{{ event.title }}" 
                              class="img-fluid lazy" 
                              data-src="{{ image_path }}"
                              onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/placeholder.svg') }}';">
@@ -41,13 +40,9 @@
                             <i class="fas fa-play"></i>
                         </div>
                     </div>
-                    <video id="video-{{ event.id }}" 
-                           class="video-js"
-                           controls
-                           preload="none"
-                           data-setup="{}"
-                           poster="{{ image_path }}">
+                    <video controls preload="none" poster="{{ image_path }}">
                         <source src="{{ url_for('static', filename=event.video_path) }}" type="video/mp4">
+                        Your browser does not support the video tag.
                     </video>
                 </div>
                 {% else %}
