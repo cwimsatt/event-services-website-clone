@@ -113,14 +113,25 @@ def new_event():
 
             # Handle image upload with improved validation
             try:
+                # Log upload directory status
+                upload_base = os.path.join(current_app.static_folder, 'uploads')
+                current_app.logger.info(f"Upload base directory: {upload_base}")
+                current_app.logger.info(f"Upload base exists: {os.path.exists(upload_base)}")
+
                 image = request.files['image']
+                current_app.logger.info(f"Processing image upload: {image.filename}")
+                
                 Event.validate_image(image)
                 image_filename = secure_filename(image.filename)
                 image_path = os.path.join('uploads', 'images', image_filename)
                 full_image_path = os.path.join(current_app.static_folder, image_path)
+                
+                current_app.logger.info(f"Saving image to: {full_image_path}")
                 image.save(full_image_path)
                 os.chmod(full_image_path, 0o644)  # Set proper file permissions
+                current_app.logger.info(f"Image saved successfully")
             except (ValueError, OSError) as e:
+                current_app.logger.error(f"Error uploading image: {str(e)}")
                 flash(f'Error uploading image: {str(e)}')
                 return render_template('admin/event_form.html', categories=categories)
 
@@ -129,13 +140,19 @@ def new_event():
             if 'video' in request.files and request.files['video'].filename:
                 try:
                     video = request.files['video']
+                    current_app.logger.info(f"Processing video upload: {video.filename}")
+                    
                     Event.validate_video(video)
                     video_filename = secure_filename(video.filename)
                     video_path = os.path.join('uploads', 'videos', video_filename)
                     full_video_path = os.path.join(current_app.static_folder, video_path)
+                    
+                    current_app.logger.info(f"Saving video to: {full_video_path}")
                     video.save(full_video_path)
                     os.chmod(full_video_path, 0o644)  # Set proper file permissions
+                    current_app.logger.info(f"Video saved successfully")
                 except (ValueError, OSError) as e:
+                    current_app.logger.error(f"Error uploading video: {str(e)}")
                     flash(f'Error uploading video: {str(e)}')
                     return render_template('admin/event_form.html', categories=categories)
 

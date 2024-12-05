@@ -2,6 +2,7 @@ from app import db
 from datetime import datetime
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask import url_for
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -48,6 +49,12 @@ class Event(db.Model):
     date = db.Column(db.DateTime, default=datetime.utcnow)
     image_path = db.Column(db.String(500))
     video_path = db.Column(db.String(500))
+    
+    @property
+    def image_url(self):
+        if self.image_path:
+            return url_for('static', filename=self.image_path)
+        return url_for('static', filename='images/placeholder.svg')
 
     @staticmethod
     def validate_image(file):

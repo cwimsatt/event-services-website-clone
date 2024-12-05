@@ -23,11 +23,7 @@
         <div class="gallery-grid">
             {% for event in events %}
             <div class="gallery-item" data-category="{{ event.category.name }}">
-                {% if event.image_path %}
-                    {% set image_path = url_for('static', filename=event.image_path) %}
-                {% else %}
-                    {% set image_path = url_for('static', filename='images/placeholder.svg') %}
-                {% endif %}
+                {% set image_path = event.image_url %}
                 
                 {% if event.video_path %}
                 <div class="video-container">

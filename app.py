@@ -34,32 +34,29 @@ db.init_app(app)
 migrate = Migrate(app, db)
 
 def setup_upload_directories():
+    # Ensure static folder exists
     if not os.path.exists(app.static_folder):
         os.makedirs(app.static_folder, mode=0o755)
     
+    # Create uploads directory structure
     upload_base = os.path.join(app.static_folder, 'uploads')
-    if not os.path.exists(upload_base):
-        os.makedirs(upload_base, mode=0o755)
-    
-    for subdir in ['images', 'videos', 'thumbnails']:
-        path = os.path.join(upload_base, subdir)
+    for directory in ['images', 'videos']:
+        path = os.path.join(upload_base, directory)
         if not os.path.exists(path):
             os.makedirs(path, mode=0o755)
         else:
             # Ensure correct permissions
             os.chmod(path, 0o755)
-            
-    # Create placeholder if it doesn't exist
+            # Set permissions for existing files
+            for file in os.listdir(path):
+                file_path = os.path.join(path, file)
+                if os.path.isfile(file_path):
+                    os.chmod(file_path, 0o644)
+                    
+    # Create images directory for placeholder if it doesn't exist
     placeholder_path = os.path.join(app.static_folder, 'images')
     if not os.path.exists(placeholder_path):
         os.makedirs(placeholder_path, mode=0o755)
-    
-    # Set proper permissions for existing files
-    for root, dirs, files in os.walk(upload_base):
-        for dir_name in dirs:
-            os.chmod(os.path.join(root, dir_name), 0o755)
-        for file_name in files:
-            os.chmod(os.path.join(root, file_name), 0o644)
 
 with app.app_context():
     import models
