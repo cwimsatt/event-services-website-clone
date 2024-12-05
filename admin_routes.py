@@ -16,11 +16,11 @@ def dashboard():
     events = Event.query.all()
     return render_template('admin/dashboard.html', events=events)
 
-@admin.route('/admin/login', methods=['GET', 'POST'])
+@admin_bp.route('/admin/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
         current_app.logger.info(f"User {current_user.username} already authenticated, redirecting to dashboard")
-        return redirect(url_for('admin.dashboard'))
+        return redirect(url_for('admin_custom.dashboard'))
 
     if request.method == 'POST':
         username = request.form.get('username')
@@ -31,7 +31,7 @@ def login():
             if user.is_admin:
                 current_app.logger.info(f"Admin user {username} authenticated successfully")
                 login_user(user)
-                return redirect(url_for('admin.dashboard'))
+                return redirect(url_for('admin_custom.dashboard'))
             else:
                 current_app.logger.warning(f"Non-admin user {username} attempted to access admin area")
                 flash('Access denied. Admin privileges required.')
@@ -40,13 +40,13 @@ def login():
             flash('Invalid username or password')
     return render_template('admin/login.html')
 
-@admin.route('/admin/logout')
+@admin_bp.route('/admin/logout')
 @login_required
 def logout():
     logout_user()
     return redirect(url_for('index'))
 
-@admin.route('/admin/event/<int:id>/delete-file/<file_type>', methods=['POST'])
+@admin_bp.route('/admin/event/<int:id>/delete-file/<file_type>', methods=['POST'])
 @login_required
 def delete_file(id, file_type):
     if not current_user.is_admin:
@@ -75,9 +75,9 @@ def delete_file(id, file_type):
     except Exception as e:
         flash(f'Error deleting file: {str(e)}', 'error')
 
-    return redirect(url_for('admin.edit_event', id=id))
+    return redirect(url_for('admin_custom.edit_event', id=id))
 
-@admin.route('/admin/event/new', methods=['GET', 'POST'])
+@admin_bp.route('/admin/event/new', methods=['GET', 'POST'])
 @login_required
 def new_event():
     if not current_user.is_admin:
@@ -103,7 +103,6 @@ def new_event():
                     if not os.path.exists(directory):
                         os.makedirs(directory, mode=0o755)
                     else:
-                        # Verify directory permissions
                         current_mode = os.stat(directory).st_mode & 0o777
                         if current_mode != 0o755:
                             os.chmod(directory, 0o755)
@@ -113,11 +112,6 @@ def new_event():
 
             # Handle image upload with improved validation
             try:
-                # Log upload directory status
-                upload_base = os.path.join(current_app.static_folder, 'uploads')
-                current_app.logger.info(f"Upload base directory: {upload_base}")
-                current_app.logger.info(f"Upload base exists: {os.path.exists(upload_base)}")
-
                 image = request.files['image']
                 current_app.logger.info(f"Processing image upload: {image.filename}")
                 
@@ -128,14 +122,14 @@ def new_event():
                 
                 current_app.logger.info(f"Saving image to: {full_image_path}")
                 image.save(full_image_path)
-                os.chmod(full_image_path, 0o644)  # Set proper file permissions
+                os.chmod(full_image_path, 0o644)
                 current_app.logger.info(f"Image saved successfully")
             except (ValueError, OSError) as e:
                 current_app.logger.error(f"Error uploading image: {str(e)}")
                 flash(f'Error uploading image: {str(e)}')
                 return render_template('admin/event_form.html', categories=categories)
 
-            # Handle optional video upload with improved validation
+            # Handle optional video upload
             video_path = None
             if 'video' in request.files and request.files['video'].filename:
                 try:
@@ -149,7 +143,7 @@ def new_event():
                     
                     current_app.logger.info(f"Saving video to: {full_video_path}")
                     video.save(full_video_path)
-                    os.chmod(full_video_path, 0o644)  # Set proper file permissions
+                    os.chmod(full_video_path, 0o644)
                     current_app.logger.info(f"Video saved successfully")
                 except (ValueError, OSError) as e:
                     current_app.logger.error(f"Error uploading video: {str(e)}")
@@ -169,11 +163,11 @@ def new_event():
         db.session.add(event)
         db.session.commit()
         flash('Event created successfully')
-        return redirect(url_for('admin.dashboard'))
+        return redirect(url_for('admin_custom.dashboard'))
 
     return render_template('admin/event_form.html', categories=categories)
 
-@admin.route('/admin/event/<int:id>/edit', methods=['GET', 'POST'])
+@admin_bp.route('/admin/event/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_event(id):
     if not current_user.is_admin:
@@ -227,11 +221,11 @@ def edit_event(id):
             return render_template('admin/event_form.html', event=event, categories=categories)
         db.session.commit()
         flash('Event updated successfully')
-        return redirect(url_for('admin.dashboard'))
+        return redirect(url_for('admin_custom.dashboard'))
 
     return render_template('admin/event_form.html', event=event, categories=categories)
 
-@admin.route('/admin/event/<int:id>/delete', methods=['POST'])
+@admin_bp.route('/admin/event/<int:id>/delete', methods=['POST'])
 @login_required
 def delete_event(id):
     if not current_user.is_admin:
@@ -242,10 +236,9 @@ def delete_event(id):
     db.session.delete(event)
     db.session.commit()
     flash('Event deleted successfully')
-    return redirect(url_for('admin.dashboard'))
+    return redirect(url_for('admin_custom.dashboard'))
 
-
-@admin.route('/admin/categories')
+@admin_bp.route('/admin/categories')
 @login_required
 def list_categories():
     if not current_user.is_admin:
@@ -254,7 +247,7 @@ def list_categories():
     categories = Category.query.all()
     return render_template('admin/categories.html', categories=categories)
 
-@admin.route('/admin/category/new', methods=['GET', 'POST'])
+@admin_bp.route('/admin/category/new', methods=['GET', 'POST'])
 @login_required
 def new_category():
     if not current_user.is_admin:
@@ -270,11 +263,11 @@ def new_category():
         db.session.add(category)
         db.session.commit()
         flash('Category created successfully')
-        return redirect(url_for('admin.list_categories'))
+        return redirect(url_for('admin_custom.list_categories'))
 
     return render_template('admin/category_form.html')
 
-@admin.route('/admin/category/<int:id>/edit', methods=['GET', 'POST'])
+@admin_bp.route('/admin/category/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_category(id):
     if not current_user.is_admin:
@@ -288,11 +281,11 @@ def edit_category(id):
         category.description = request.form.get('description')
         db.session.commit()
         flash('Category updated successfully')
-        return redirect(url_for('admin.list_categories'))
+        return redirect(url_for('admin_custom.list_categories'))
 
     return render_template('admin/category_form.html', category=category)
 
-@admin.route('/admin/category/<int:id>/delete', methods=['POST'])
+@admin_bp.route('/admin/category/<int:id>/delete', methods=['POST'])
 @login_required
 def delete_category(id):
     if not current_user.is_admin:
@@ -302,9 +295,9 @@ def delete_category(id):
     category = Category.query.get_or_404(id)
     if Event.query.filter_by(category_id=category.id).first():
         flash('Cannot delete category that has events')
-        return redirect(url_for('admin.list_categories'))
+        return redirect(url_for('admin_custom.list_categories'))
 
     db.session.delete(category)
     db.session.commit()
     flash('Category deleted successfully')
-    return redirect(url_for('admin.list_categories'))
+    return redirect(url_for('admin_custom.list_categories'))
