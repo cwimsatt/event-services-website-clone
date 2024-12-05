@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // Initialize Masonry with proper configuration and error handling
+    // Initialize Masonry with proper configuration
     const initMasonry = function() {
         try {
             if (typeof Masonry !== 'function') {
@@ -38,99 +38,97 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize filtering functionality
     const initializeFilters = function(masonryInstance) {
-        try {
-            const filterButtons = document.querySelectorAll('.filter-btn');
-            const items = document.querySelectorAll('.gallery-item');
-            
-            if (!filterButtons.length) return;
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const items = document.querySelectorAll('.gallery-item');
+        
+        if (!filterButtons.length) return;
 
-            filterButtons.forEach(button => {
-                button.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const category = this.getAttribute('data-category');
-                    
-                    if (!category) return;
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const category = this.getAttribute('data-category');
+                
+                if (!category) return;
 
-                    // Update active button state
-                    filterButtons.forEach(btn => btn.classList.remove('active'));
-                    this.classList.add('active');
+                // Update active button state
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
 
-                    // Filter gallery items
-                    items.forEach(item => {
-                        if (category === 'all' || item.getAttribute('data-category') === category) {
-                            item.style.display = '';
-                            item.classList.add('show');
-                        } else {
-                            item.style.display = 'none';
-                            item.classList.remove('show');
-                        }
-                    });
-
-                    // Re-layout Masonry after filtering
-                    if (masonryInstance && typeof masonryInstance.layout === 'function') {
-                        setTimeout(() => {
-                            masonryInstance.layout();
-                        }, 100);
+                // Filter gallery items
+                items.forEach(item => {
+                    if (category === 'all' || item.getAttribute('data-category') === category) {
+                        item.style.display = '';
+                        item.classList.add('show');
+                    } else {
+                        item.style.display = 'none';
+                        item.classList.remove('show');
                     }
                 });
+
+                // Re-layout Masonry after filtering
+                if (masonryInstance) {
+                    setTimeout(() => masonryInstance.layout(), 100);
+                }
             });
-        } catch (error) {
-            handleError(error);
-        }
+        });
     };
 
-    // Initialize lazy loading with Intersection Observer
+    // Initialize lazy loading
     const initializeLazyLoading = function(masonryInstance) {
-        try {
-            const lazyImages = document.querySelectorAll('img.lazy');
-            
-            if (!lazyImages.length) return;
+        const lazyImages = document.querySelectorAll('img.lazy');
+        
+        if (!lazyImages.length) return;
 
-            const imageObserver = new IntersectionObserver((entries, observer) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const img = entry.target;
-                        if (img.dataset.src) {
-                            img.src = img.dataset.src;
-                            img.classList.remove('lazy');
-                            observer.unobserve(img);
-                            
-                            // Trigger layout update after image loads
-                            img.addEventListener('load', () => {
-                                if (masonryInstance && typeof masonryInstance.layout === 'function') {
-                                    masonryInstance.layout();
-                                }
-                            });
-                        }
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    if (img.dataset.src) {
+                        img.src = img.dataset.src;
+                        img.classList.remove('lazy');
+                        observer.unobserve(img);
+                        
+                        // Update layout after image loads
+                        img.addEventListener('load', () => {
+                            if (masonryInstance) {
+                                masonryInstance.layout();
+                            }
+                        });
                     }
-                });
-            }, {
-                root: null,
-                rootMargin: '50px',
-                threshold: 0.1
+                }
             });
+        }, {
+            root: null,
+            rootMargin: '50px',
+            threshold: 0.1
+        });
 
-            lazyImages.forEach(img => imageObserver.observe(img));
-        } catch (error) {
-            handleError(error);
-        }
+        lazyImages.forEach(img => imageObserver.observe(img));
     };
 
     // Initialize gallery
-    try {
-        if (typeof imagesLoaded === 'undefined') {
-            console.warn('imagesLoaded not available, falling back to direct initialization');
-            initMasonry();
-            initializeFilters(masonry);
-            initializeLazyLoading(masonry);
-        } else {
+    const initializeGallery = () => {
+        if (!grid) return;
+        
+        // Wait for images to load before initializing Masonry
+        if (typeof imagesLoaded === 'function') {
             imagesLoaded(grid, function() {
                 masonry = initMasonry();
+                if (masonry) {
+                    initializeFilters(masonry);
+                    initializeLazyLoading(masonry);
+                }
+            });
+        } else {
+            console.warn('imagesLoaded not available, falling back to direct initialization');
+            masonry = initMasonry();
+            if (masonry) {
                 initializeFilters(masonry);
                 initializeLazyLoading(masonry);
-            });
+            }
         }
-    } catch (error) {
-        handleError(error);
-    }
+    };
+
+    // Start initialization
+    initializeGallery();
 });
