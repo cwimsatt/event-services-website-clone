@@ -61,8 +61,7 @@ def setup_upload_directories():
 with app.app_context():
     import models
     import routes
-    from admin_routes import admin
-    app.register_blueprint(admin)
+    import admin_views  # Import new admin views
     db.create_all()
     setup_upload_directories()
     

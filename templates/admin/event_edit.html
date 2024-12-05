@@ -1,0 +1,12 @@
+{% extends 'admin/model/edit.html' %}
+{% import 'admin/lib.html' as lib with context %}
+
+{% block head %}
+  {{ super() }}
+  {{ ckeditor.load() }}
+{% endblock %}
+
+{% block body %}
+  {{ super() }}
+  {{ ckeditor.config(name='description') }}
+{% endblock %}
