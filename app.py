@@ -23,7 +23,7 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 login_manager.init_app(app)
-login_manager.login_view = 'admin.login'
+login_manager.login_view = 'admin_custom.login'
 app.secret_key = os.environ.get("FLASK_SECRET_KEY") or "a secret key"
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///events.db")
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {

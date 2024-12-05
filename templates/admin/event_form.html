@@ -46,7 +46,7 @@
                 </div>
                 <div class="mt-2 d-flex align-items-center">
                     <small class="text-muted me-2">File: {{ event.image_path }}</small>
-                    <form action="{{ url_for('admin.delete_file', id=event.id, file_type='image') }}" method="POST" class="d-inline">
+                    <form action="{{ url_for('admin_custom.delete_file', id=event.id, file_type='image') }}" method="POST" class="d-inline">
                         <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this image?')">
                             <i class="fas fa-trash"></i> Delete Image
                         </button>
@@ -82,7 +82,7 @@
             {% if event and event.video_path %}
             <div class="mt-2 d-flex align-items-center">
                 <small class="text-muted me-2">Current video: {{ event.video_path }}</small>
-                <form action="{{ url_for('admin.delete_file', id=event.id, file_type='video') }}" method="POST" class="d-inline">
+                <form action="{{ url_for('admin_custom.delete_file', id=event.id, file_type='video') }}" method="POST" class="d-inline">
                     <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this video?')">
                         <i class="fas fa-trash"></i> Delete Video
                     </button>
@@ -115,7 +115,7 @@
         
         <div class="mb-3">
             <button type="submit" class="btn btn-primary">Save Event</button>
-            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">Cancel</a>
+            <a href="{{ url_for('admin_custom.dashboard') }}" class="btn btn-secondary">Cancel</a>
         </div>
     </form>
 </div>

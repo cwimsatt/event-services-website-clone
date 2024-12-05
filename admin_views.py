@@ -14,13 +14,13 @@ class SecureModelView(ModelView):
         return current_user.is_authenticated and current_user.is_admin
 
     def inaccessible_callback(self, name, **kwargs):
-        return redirect(url_for('admin.login'))
+        return redirect(url_for('admin_custom.login'))
 
 class SecureAdminIndexView(AdminIndexView):
     @expose('/')
     def index(self):
         if not current_user.is_authenticated or not current_user.is_admin:
-            return redirect(url_for('admin.login'))
+            return redirect(url_for('admin_custom.login'))
         return super().index()
 
 class EventModelView(SecureModelView):
