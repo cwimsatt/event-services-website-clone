@@ -374,22 +374,3 @@ def delete_category(id):
     db.session.commit()
     flash('Category deleted successfully')
     return redirect(url_for('admin_custom.list_categories'))
-
-@admin_bp.route('/admin/event/update-sequence', methods=['POST'])
-@login_required
-def update_sequence():
-    if not current_user.is_admin:
-        return {'error': 'Access denied'}, 403
-        
-    try:
-        sequences = request.json
-        for event_id, new_sequence in sequences.items():
-            event = Event.query.get(int(event_id))
-            if event:
-                event.sequence = float(new_sequence)
-        db.session.commit()
-        return {'message': 'Sequences updated successfully'}, 200
-    except Exception as e:
-        current_app.logger.error(f"Error updating sequences: {str(e)}")
-        db.session.rollback()
-        return {'error': str(e)}, 500
