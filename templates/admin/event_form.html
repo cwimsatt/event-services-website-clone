@@ -51,7 +51,7 @@
         
         <div class="mb-3">
             <label for="sequence" class="form-label">Display Sequence</label>
-            <input type="number" class="form-control" id="sequence" name="sequence" value="{{ event.sequence if event else '' }}" placeholder="Enter display order number">
+            <input type="number" class="form-control" id="sequence" name="sequence" value="{{ event.sequence if event else '' }}" step="0.001" placeholder="Enter display order number (supports decimals)">
             <small class="form-text text-muted">Lower numbers will be displayed first. Leave empty for default ordering.</small>
         </div>
         

@@ -151,7 +151,7 @@ def new_event():
                     return render_template('admin/event_form.html', categories=categories)
 
             sequence = request.form.get('sequence')
-            sequence = int(sequence) if sequence and sequence.strip() else None
+            sequence = float(sequence) if sequence and sequence.strip() else None
             
             event = Event(
                 title=request.form.get('title'),
@@ -207,7 +207,7 @@ def edit_event(id):
             # Handle sequence field
             sequence = request.form.get('sequence')
             try:
-                event.sequence = int(sequence) if sequence and sequence.strip() else None
+                event.sequence = float(sequence) if sequence and sequence.strip() else None
                 current_app.logger.info(f"Sequence value set to: {event.sequence}")
             except ValueError as e:
                 current_app.logger.error(f"Invalid sequence value: {sequence}, Error: {str(e)}")

@@ -49,7 +49,7 @@ class Event(db.Model):
     date = db.Column(db.DateTime, default=datetime.utcnow)
     image_path = db.Column(db.String(500))
     video_path = db.Column(db.String(500))
-    sequence = db.Column(db.Integer, nullable=True)
+    sequence = db.Column(db.Float, nullable=True)
     
     @property
     def image_url(self):
