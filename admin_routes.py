@@ -192,8 +192,13 @@ def edit_event(id):
             event.category_id = category_id
             event.description = request.form.get('description')
             
+            # Handle sequence field
             sequence = request.form.get('sequence')
-            event.sequence = int(sequence) if sequence and sequence.strip() else None
+            try:
+                event.sequence = int(sequence) if sequence and sequence.strip() else None
+            except ValueError:
+                flash('Invalid sequence number provided')
+                return render_template('admin/event_form.html', event=event, categories=categories)
 
             # Handle image upload if new image is provided
             if 'image' in request.files and request.files['image'].filename:
