@@ -20,15 +20,20 @@ def portfolio():
     categories = Category.query.all()
     category_id = request.args.get('category_id', 'all')
     
+    # Get events based on category
     if category_id != 'all':
         events = Event.query.filter_by(category_id=category_id).all()
     else:
         events = Event.query.all()
     
-    # Check and log missing images
+    # Debug log for each event's image path
     for event in events:
-        if event.image_path and not ensure_image_exists(event.image_path):
-            current_app.logger.warning(f"Missing image for event {event.title}: {event.image_path}")
+        current_app.logger.info(f"Event: {event.title}")
+        current_app.logger.info(f"Image path: {event.image_path}")
+        if event.image_path:
+            full_path = os.path.join(current_app.static_folder, event.image_path.lstrip('/'))
+            current_app.logger.info(f"Full path: {full_path}")
+            current_app.logger.info(f"File exists: {os.path.exists(full_path)}")
     
     return render_template('portfolio.html', 
                          events=events, 

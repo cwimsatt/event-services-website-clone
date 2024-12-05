@@ -52,11 +52,12 @@ class Event(db.Model):
     
     @property
     def image_url(self):
-        if self.image_path:
-            full_path = os.path.join(current_app.static_folder, self.image_path)
+        if self.image_path and self.image_path.strip():
+            # Ensure path is relative to static folder
+            full_path = os.path.join(current_app.static_folder, self.image_path.lstrip('/'))
             if os.path.exists(full_path):
-                return url_for('static', filename=self.image_path)
-            current_app.logger.warning(f"Image file not found at {full_path}")
+                return url_for('static', filename=self.image_path.lstrip('/'))
+            current_app.logger.warning(f"Image not found at {full_path}")
         return url_for('static', filename='images/placeholder.svg')
 
     @staticmethod
