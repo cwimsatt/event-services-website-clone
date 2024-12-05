@@ -11,9 +11,9 @@ admin_bp = Blueprint('admin_custom', __name__)
 @login_required
 def dashboard():
     if not current_user.is_admin:
-        flash('Access denied. Admin privileges required.')
+        flash('Access denied. Admin privileges required.', 'danger')
         return redirect(url_for('index'))
-    events = Event.query.all()
+    events = Event.query.order_by(Event.sequence.nullslast(), Event.date.desc()).all()
     return render_template('admin/dashboard.html', events=events)
 
 @admin_bp.route('/admin/login', methods=['GET', 'POST'])
@@ -175,16 +175,28 @@ def new_event():
 @login_required
 def edit_event(id):
     if not current_user.is_admin:
-        flash('Access denied. Admin privileges required.')
+        flash('Access denied. Admin privileges required.', 'danger')
         return redirect(url_for('index'))
 
     event = Event.query.get_or_404(id)
     categories = Category.query.all()
+    
+    current_app.logger.info(f"Processing edit request for event ID: {id}")
 
     if request.method == 'POST':
+        # Log form data for debugging
+        current_app.logger.info("Form data received:")
+        current_app.logger.info(f"Title: {request.form.get('title')}")
+        current_app.logger.info(f"Category ID: {request.form.get('category_id')}")
+        current_app.logger.info(f"Sequence: {request.form.get('sequence')}")
+
+        if 'csrf_token' not in request.form:
+            flash('CSRF token missing', 'danger')
+            return render_template('admin/event_form.html', event=event, categories=categories)
+
         category_id = request.form.get('category_id')
         if not category_id or not Category.query.get(category_id):
-            flash('Please select a valid category')
+            flash('Please select a valid category', 'danger')
             return render_template('admin/event_form.html', event=event, categories=categories)
 
         try:
@@ -196,8 +208,10 @@ def edit_event(id):
             sequence = request.form.get('sequence')
             try:
                 event.sequence = int(sequence) if sequence and sequence.strip() else None
-            except ValueError:
-                flash('Invalid sequence number provided')
+                current_app.logger.info(f"Sequence value set to: {event.sequence}")
+            except ValueError as e:
+                current_app.logger.error(f"Invalid sequence value: {sequence}, Error: {str(e)}")
+                flash('Invalid sequence number provided', 'danger')
                 return render_template('admin/event_form.html', event=event, categories=categories)
 
             # Handle image upload if new image is provided
@@ -206,8 +220,10 @@ def edit_event(id):
                 Event.validate_image(image)
                 image_filename = secure_filename(image.filename)
                 image_path = os.path.join('uploads', 'images', image_filename)
-                image.save(os.path.join(current_app.static_folder, image_path))
-                # Remove old image if exists
+                full_image_path = os.path.join(current_app.static_folder, image_path)
+                image.save(full_image_path)
+                os.chmod(full_image_path, 0o644)
+                
                 if event.image_path:
                     old_image_path = os.path.join(current_app.static_folder, event.image_path)
                     if os.path.exists(old_image_path):
@@ -220,20 +236,29 @@ def edit_event(id):
                 Event.validate_video(video)
                 video_filename = secure_filename(video.filename)
                 video_path = os.path.join('uploads', 'videos', video_filename)
-                video.save(os.path.join(current_app.static_folder, video_path))
-                # Remove old video if exists
+                full_video_path = os.path.join(current_app.static_folder, video_path)
+                video.save(full_video_path)
+                os.chmod(full_video_path, 0o644)
+                
                 if event.video_path:
                     old_video_path = os.path.join(current_app.static_folder, event.video_path)
                     if os.path.exists(old_video_path):
                         os.remove(old_video_path)
                 event.video_path = video_path
 
+            db.session.commit()
+            current_app.logger.info(f"Event {id} updated successfully")
+            flash('Event updated successfully', 'success')
+            return redirect(url_for('admin_custom.dashboard'))
+
         except ValueError as e:
-            flash(str(e))
+            current_app.logger.error(f"Error updating event {id}: {str(e)}")
+            flash(str(e), 'danger')
             return render_template('admin/event_form.html', event=event, categories=categories)
-        db.session.commit()
-        flash('Event updated successfully')
-        return redirect(url_for('admin_custom.dashboard'))
+        except Exception as e:
+            current_app.logger.error(f"Unexpected error updating event {id}: {str(e)}")
+            flash('An unexpected error occurred while updating the event', 'danger')
+            return render_template('admin/event_form.html', event=event, categories=categories)
 
     return render_template('admin/event_form.html', event=event, categories=categories)
 

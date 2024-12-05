@@ -4,7 +4,15 @@
 <div class="container mt-5 pt-5">
     <h2>{% if event %}Edit{% else %}New{% endif %} Event</h2>
     
-    <form method="POST" enctype="multipart/form-data">
+    <form method="POST" enctype="multipart/form-data" action="{{ url_for('admin_custom.edit_event', id=event.id) if event else url_for('admin_custom.new_event') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
         <div class="mb-3">
             <label for="title" class="form-label">Title</label>
             <input type="text" class="form-control" id="title" name="title" value="{{ event.title if event else '' }}" required>
