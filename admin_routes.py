@@ -155,7 +155,7 @@ def new_event():
             try:
                 if sequence and sequence.strip():
                     try:
-                        sequence = float(sequence)
+                        sequence = round(float(sequence), 3)
                         current_app.logger.info(f"New event sequence value set to: {sequence}")
                     except ValueError:
                         current_app.logger.error(f"Invalid sequence value for new event (not a number): {sequence}")
@@ -225,7 +225,7 @@ def edit_event(id):
             try:
                 if sequence and sequence.strip():
                     try:
-                        event.sequence = float(sequence)
+                        event.sequence = round(float(sequence), 3)
                         current_app.logger.info(f"Sequence value set to: {event.sequence}")
                     except ValueError:
                         current_app.logger.error(f"Invalid sequence value (not a number): {sequence}")
