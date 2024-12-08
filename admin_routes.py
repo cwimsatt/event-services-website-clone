@@ -40,6 +40,11 @@ def login():
         return redirect(url_for('admin_custom.dashboard'))
 
     if request.method == 'POST':
+        if 'csrf_token' not in request.form:
+            current_app.logger.warning("CSRF token missing in login request")
+            flash('CSRF token missing', 'danger')
+            return render_template('admin/login.html')
+            
         username = request.form.get('username')
         current_app.logger.info(f"Login attempt for user: {username}")
         
