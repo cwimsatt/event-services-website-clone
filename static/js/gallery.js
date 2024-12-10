@@ -24,7 +24,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const masonry = new Masonry(grid, {
                     itemSelector: '.gallery-item',
                     columnWidth: '.gallery-item',
-                    percentPosition: true,
+                    gutter: 20,
+                    fitWidth: true,
                     transitionDuration: '0.3s'
                 });
 
@@ -32,10 +33,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.log(`Masonry initialized successfully for grid ${index + 1}`);
             } catch (error) {
                 console.error(`Gallery initialization error for grid ${index + 1}:`, error);
-                // Fallback to basic grid layout
-                grid.style.display = 'grid';
-                grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
-                grid.style.gap = '1rem';
+                // Fallback to basic flex layout
+                grid.style.display = 'flex';
+                grid.style.flexWrap = 'wrap';
+                grid.style.justifyContent = 'space-between';
             }
         });
 
