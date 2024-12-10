@@ -20,13 +20,16 @@
         </div>
 
         <!-- Categorized Gallery Grid -->
-        {% set ns = namespace(current_category=None) %}
+        {% set last_category = None %}
         {% for event in events %}
-            {% if ns.current_category != event.category.id %}
-                {% if not loop.first %}</div>{% endif %}
-                <h3 class="category-title mt-4 mb-3">{{ event.category.name }}</h3>
-                <div class="gallery-grid" data-category="{{ event.category.name }}">
-                {% set ns.current_category = event.category.id %}
+            {% if last_category != event.category %}
+                {% if not loop.first %}
+                    </div> <!-- Close previous gallery-grid -->
+                {% endif %}
+                <div class="category-section mb-5">
+                    <h3 class="category-title mt-4 mb-3">{{ event.category.name }}</h3>
+                    <div class="gallery-grid" data-category="{{ event.category.name }}">
+                {% set last_category = event.category %}
             {% endif %}
             
             <div class="gallery-item" data-sequence="{{ event.sequence or 0 }}">
@@ -35,7 +38,8 @@
                 {% if event.video_path %}
                 <div class="video-container">
                     <div class="video-thumbnail">
-                        <img src="{{ image_path }}" alt="{{ event.title }}" 
+                        <img src="{{ image_path }}" 
+                             alt="{{ event.title }}" 
                              class="img-fluid lazy" 
                              data-src="{{ image_path }}"
                              onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/placeholder.svg') }}';">
@@ -62,9 +66,11 @@
                     <span class="event-date">{{ event.date.strftime('%B %Y') }}</span>
                 </div>
             </div>
-            {% if loop.last %}</div>{% endif %}
+            {% if loop.last %}
+                    </div> <!-- Close last gallery-grid -->
+                </div> <!-- Close last category-section -->
+            {% endif %}
         {% endfor %}
-        </div>
     </div>
 </div>
 {% endblock %}
