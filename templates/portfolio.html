@@ -20,18 +20,25 @@
         </div>
 
         <!-- Categorized Gallery Grid -->
-        {% set last_category = None %}
-        {% for event in events %}
-            {% if last_category != event.category %}
-                {% if not loop.first %}
-                    </div> <!-- Close previous gallery-grid -->
-                </div> <!-- Close previous category-section -->
+        {% if active_category != 'all' %}
+            <div class="category-section mb-5">
+                <h3 class="category-title mt-4 mb-3">{{ events[0].category.name if events }}</h3>
+                <div class="gallery-grid">
+                {% for event in events %}
+        {% else %}
+            {% set last_category = None %}
+            {% for event in events %}
+                {% if last_category != event.category %}
+                    {% if not loop.first %}
+                        </div> <!-- Close previous gallery-grid -->
+                    </div> <!-- Close previous category-section -->
+                    {% endif %}
+                    <div class="category-section mb-5">
+                        <h3 class="category-title mt-4 mb-3">{{ event.category.name }}</h3>
+                        <div class="gallery-grid" data-category="{{ event.category.name }}">
+                    {% set last_category = event.category %}
                 {% endif %}
-                <div class="category-section mb-5">
-                    <h3 class="category-title mt-4 mb-3">{{ event.category.name }}</h3>
-                    <div class="gallery-grid" data-category="{{ event.category.name }}">
-                {% set last_category = event.category %}
-            {% endif %}
+        {% endif %}
             
             <div class="gallery-item" data-sequence="{{ event.sequence or 0 }}">
                 {% if event.image_path %}
@@ -70,10 +77,10 @@
                 </div>
             </div>
             {% if loop.last %}
-                    </div> <!-- Close last gallery-grid -->
-                </div> <!-- Close last category-section -->
-            {% endif %}
-        {% endfor %}
+                    </div> <!-- Close gallery-grid -->
+                    </div> <!-- Close category-section -->
+                {% endif %}
+            {% endfor %}
     </div>
 </div>
 {% endblock %}
