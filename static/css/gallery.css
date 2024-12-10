@@ -1,9 +1,10 @@
 .gallery-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-    width: 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+    margin: 0 auto 2rem;
+    padding: 0 15px;
+    max-width: 1200px;
 }
 
 .gallery-item {
@@ -13,8 +14,9 @@
     overflow: hidden;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     transition: transform 0.3s ease;
-    break-inside: avoid;
-    margin-bottom: 0;
+    width: 100%;
+    min-width: 250px;
+    margin-bottom: 20px;
 }
 
 @media (max-width: 992px) {
