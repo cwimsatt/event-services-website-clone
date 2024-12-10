@@ -4,7 +4,7 @@ from flask_admin.contrib.sqla import ModelView
 from flask_login import current_user
 from flask_ckeditor import CKEditor, CKEditorField
 from app import app, db
-from models import User, Category, Event, Testimonial, Contact
+from models import User, Category, Event, Testimonial, Contact, Theme, ThemeColors
 
 # Initialize CKEditor
 ckeditor = CKEditor(app)
@@ -59,3 +59,21 @@ admin.add_view(CategoryModelView(Category, db.session))
 admin.add_view(EventModelView(Event, db.session))
 admin.add_view(TestimonialModelView(Testimonial, db.session))
 admin.add_view(ContactModelView(Contact, db.session))
+
+class ThemeModelView(SecureModelView):
+    column_list = ('name', 'slug', 'is_custom', 'is_active')
+    column_searchable_list = ['name']
+    inline_models = [(ThemeColors, {
+        'form_columns': ['primary_color', 'secondary_color', 'accent_color']
+    })]
+    form_excluded_columns = ['colors']
+    create_template = 'admin/theme_form.html'
+    edit_template = 'admin/theme_form.html'
+
+    def on_model_change(self, form, model, is_created):
+        # Ensure only one theme is active at a time
+        if model.is_active:
+            Theme.query.filter(Theme.id != model.id).update({'is_active': False})
+            db.session.commit()
+
+admin.add_view(ThemeModelView(Theme, db.session))

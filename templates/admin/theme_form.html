@@ -1,0 +1,14 @@
+{% extends 'admin/model/edit.html' %}
+
+{% block tail %}
+    {{ super() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize color pickers for inline form
+            var colorInputs = document.querySelectorAll('input[type="text"][name*="color"]');
+            colorInputs.forEach(function(input) {
+                input.type = 'color';
+            });
+        });
+    </script>
+{% endblock %}

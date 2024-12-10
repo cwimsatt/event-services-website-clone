@@ -96,3 +96,25 @@ class Contact(db.Model):
     email = db.Column(db.String(120), nullable=False)
     message = db.Column(db.Text, nullable=False)
     date = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class Theme(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+    slug = db.Column(db.String(50), unique=True, nullable=False)
+    is_custom = db.Column(db.Boolean, default=False)
+    is_active = db.Column(db.Boolean, default=False)
+    colors = db.relationship('ThemeColors', backref='theme', uselist=False, cascade='all, delete-orphan')
+
+    def __repr__(self):
+        return f'<Theme {self.name}>'
+
+class ThemeColors(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    theme_id = db.Column(db.Integer, db.ForeignKey('theme.id'), nullable=False)
+    primary_color = db.Column(db.String(7), nullable=False)  # Hex color code (#RRGGBB)
+    secondary_color = db.Column(db.String(7), nullable=False)
+    accent_color = db.Column(db.String(7), nullable=False)
+
+    def __repr__(self):
+        return f'<ThemeColors for {self.theme.name}>'
