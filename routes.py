@@ -43,12 +43,15 @@ def portfolio():
     
     # Debug log for each event's image path
     for event in events:
-        current_app.logger.info(f"Event: {event.title}")
+        current_app.logger.info(f"Event ID: {event.id}")
+        current_app.logger.info(f"Event Title: {event.title}")
+        current_app.logger.info(f"Category: {event.category.name}")
         current_app.logger.info(f"Image path: {event.image_path}")
         if event.image_path:
             full_path = os.path.join(current_app.static_folder, event.image_path.lstrip('/'))
             current_app.logger.info(f"Full path: {full_path}")
             current_app.logger.info(f"File exists: {os.path.exists(full_path)}")
+        current_app.logger.info("---")
     
     return render_template('portfolio.html', 
                          events=events, 

@@ -33,32 +33,34 @@
             {% endif %}
             
             <div class="gallery-item" data-sequence="{{ event.sequence or 0 }}">
-                {% set image_path = event.image_url %}
-                
-                {% if event.video_path %}
-                <div class="video-container">
-                    <div class="video-thumbnail">
+                {% if event.image_path %}
+                    {% set image_path = url_for('static', filename=event.image_path) %}
+                    
+                    {% if event.video_path %}
+                    <div class="video-container">
+                        <div class="video-thumbnail">
+                            <img src="{{ image_path }}" 
+                                 alt="{{ event.title }}" 
+                                 class="img-fluid lazy" 
+                                 data-src="{{ image_path }}"
+                                 onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/placeholder.svg') }}';">
+                            <div class="play-overlay">
+                                <i class="fas fa-play"></i>
+                            </div>
+                        </div>
+                        <video controls preload="none" poster="{{ image_path }}">
+                            <source src="{{ url_for('static', filename=event.video_path) }}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+                    {% else %}
+                    <a href="{{ image_path }}" class="glightbox">
                         <img src="{{ image_path }}" 
                              alt="{{ event.title }}" 
                              class="img-fluid lazy" 
-                             data-src="{{ image_path }}"
-                             onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/placeholder.svg') }}';">
-                        <div class="play-overlay">
-                            <i class="fas fa-play"></i>
-                        </div>
-                    </div>
-                    <video controls preload="none" poster="{{ image_path }}">
-                        <source src="{{ url_for('static', filename=event.video_path) }}" type="video/mp4">
-                        Your browser does not support the video tag.
-                    </video>
-                </div>
-                {% else %}
-                <a href="{{ image_path }}" class="glightbox">
-                    <img src="{{ image_path }}" 
-                         alt="{{ event.title }}" 
-                         class="img-fluid lazy" 
-                         data-src="{{ image_path }}">
-                </a>
+                             data-src="{{ image_path }}">
+                    </a>
+                    {% endif %}
                 {% endif %}
                 <div class="gallery-caption">
                     <h4>{{ event.title }}</h4>
