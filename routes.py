@@ -21,13 +21,27 @@ def portfolio():
     category_id = request.args.get('category_id', 'all')
     
     # Get events based on category and sort by both category and event sequence
+    base_query = Event.query.join(Category)
+    
     if category_id != 'all':
-        events = Event.query.filter_by(category_id=category_id)\
-            .join(Category)\
-            .order_by(Category.sequence.nullslast(), Event.sequence.nullslast(), Event.date.desc()).all()
-    else:
-        events = Event.query.join(Category)\
-            .order_by(Category.sequence.nullslast(), Event.sequence.nullslast(), Event.date.desc()).all()
+        try:
+            category_id = int(category_id)
+            base_query = base_query.filter(Event.category_id == category_id)
+        except (ValueError, TypeError):
+            current_app.logger.error(f"Invalid category_id: {category_id}")
+            category_id = 'all'
+    
+    events = base_query.order_by(
+        Category.sequence.nullslast(),
+        Event.sequence.nullslast(),
+        Event.date.desc()
+    ).all()
+    
+    # Log query results for debugging
+    current_app.logger.info(f"Category filter: {category_id}")
+    current_app.logger.info(f"Number of events found: {len(events)}")
+    for event in events:
+        current_app.logger.info(f"Event: {event.title}, Category: {event.category.name}")
     
     # Debug log for each event's image path
     for event in events:
