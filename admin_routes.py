@@ -1,7 +1,7 @@
 import os
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_user, logout_user, login_required, current_user
-from app import db, csrf
+from extensions import db, csrf
 from models import User, Event, Category
 from werkzeug.utils import secure_filename
 from decimal import Decimal

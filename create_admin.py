@@ -1,4 +1,5 @@
-from app import app, db
+from extensions import db
+from app import app
 from models import User
 
 def create_admin_user():

@@ -2,12 +2,21 @@ from flask import redirect, url_for
 from flask_admin import Admin, AdminIndexView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_login import current_user
-from flask_ckeditor import CKEditor, CKEditorField
-from app import app, db
+from flask_ckeditor import CKEditorField
+from extensions import db
 from models import User, Category, Event, Testimonial, Contact, Theme, ThemeColors
 
-# Initialize CKEditor
-ckeditor = CKEditor(app)
+def init_admin(app):
+    admin = Admin(app, name='Event Services Admin', template_mode='bootstrap4', index_view=SecureAdminIndexView())
+    
+    # Add model views
+    admin.add_view(CategoryModelView(Category, db.session))
+    admin.add_view(EventModelView(Event, db.session))
+    admin.add_view(TestimonialModelView(Testimonial, db.session))
+    admin.add_view(ContactModelView(Contact, db.session))
+    admin.add_view(ThemeModelView(Theme, db.session))
+    
+    return admin
 
 class SecureModelView(ModelView):
     def is_accessible(self):
@@ -51,15 +60,6 @@ class ContactModelView(SecureModelView):
     column_searchable_list = ['name', 'email']
     can_create = False
 
-# Initialize Flask-Admin
-admin = Admin(app, name='Event Services Admin', template_mode='bootstrap4', index_view=SecureAdminIndexView())
-
-# Add model views
-admin.add_view(CategoryModelView(Category, db.session))
-admin.add_view(EventModelView(Event, db.session))
-admin.add_view(TestimonialModelView(Testimonial, db.session))
-admin.add_view(ContactModelView(Contact, db.session))
-
 class ThemeModelView(SecureModelView):
     column_list = ('name', 'slug', 'is_custom', 'is_active')
     column_searchable_list = ['name']
@@ -76,4 +76,4 @@ class ThemeModelView(SecureModelView):
             Theme.query.filter(Theme.id != model.id).update({'is_active': False})
             db.session.commit()
 
-admin.add_view(ThemeModelView(Theme, db.session))
+# Admin initialization is now handled in app.py's register_extensions function

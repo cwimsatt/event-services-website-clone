@@ -1,40 +1,34 @@
 import os
 import logging
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase
-from flask_login import LoginManager
-from flask_migrate import Migrate
-from flask_wtf.csrf import CSRFProtect
+from extensions import db, login_manager, csrf, migrate, ckeditor
 
-# Setup logging - and test git change detection
+# Setup logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-class Base(DeclarativeBase):
-    pass
+def create_app():
+    app = Flask(__name__)
+    
+    # Configuration
+    app.secret_key = os.environ.get("FLASK_SECRET_KEY") or "a secret key"
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///events.db")
+    app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+        "pool_recycle": 300,
+        "pool_pre_ping": True,
+    }
+    
+    # Initialize extensions
+    db.init_app(app)
+    login_manager.init_app(app)
+    login_manager.login_view = 'admin_custom.login'
+    csrf.init_app(app)
+    migrate.init_app(app, db)
+    ckeditor.init_app(app)
+    
+    return app
 
-db = SQLAlchemy(model_class=Base)
-login_manager = LoginManager()
-csrf = CSRFProtect()
-app = Flask(__name__)
-
-@login_manager.user_loader
-def load_user(user_id):
-    from models import User
-    return User.query.get(int(user_id))
-
-login_manager.init_app(app)
-login_manager.login_view = 'admin_custom.login'
-app.secret_key = os.environ.get("FLASK_SECRET_KEY") or "a secret key"
-csrf.init_app(app)
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///events.db")
-app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_recycle": 300,
-    "pool_pre_ping": True,
-}
-db.init_app(app)
-migrate = Migrate(app, db)
+app = create_app()
 
 def setup_upload_directories():
     logger.info("Setting up upload directories...")
@@ -81,14 +75,24 @@ def setup_upload_directories():
         logger.info("Creating placeholder directory...")
         os.makedirs(placeholder_path, mode=0o755)
 
+def register_extensions(app):
+    # Import views and routes here to avoid circular imports
+    from admin_routes import admin_bp
+    import admin_views
+    import routes  # This import must be after admin_views
+    
+    # Register blueprints
+    app.register_blueprint(admin_bp)
+    
+    # Initialize admin interface
+    admin_views.init_admin(app)
+    
+    return app
+
 with app.app_context():
-    import models
-    import routes
-    import admin_views  # Import new admin views
-    from admin_routes import admin_bp  # Import admin blueprint
-    app.register_blueprint(admin_bp)  # Register the admin blueprint
+    import models  # This import creates the models
     db.create_all()
     setup_upload_directories()
+    register_extensions(app)
     
-    # Admin user will be created after migrations are complete
     logger.info("Database initialization complete")
