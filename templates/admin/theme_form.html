@@ -1,29 +1,132 @@
-{% extends 'admin/model/edit.html' %}
+{% extends "base.html" %}
 
-{% block tail %}
-    {{ super() }}
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize color pickers for inline form
-            var colorInputs = document.querySelectorAll('input[type="text"][name*="color"]');
-            colorInputs.forEach(function(input) {
-                if (input.value.match(/^#[0-9A-Fa-f]{6}$/)) {
-                    input.type = 'color';
+{% block content %}
+<div class="container mt-5 pt-5">
+    <div class="card">
+        <div class="card-header">
+            <h2>{% if theme %}Edit Theme{% else %}Add New Theme{% endif %}</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" class="theme-form">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="mb-3">
+                    <label for="name" class="form-label">Theme Name</label>
+                    <input type="text" class="form-control" id="name" name="name" value="{{ theme.name if theme else '' }}" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="primary_color" class="form-label">Primary Color</label>
+                    <input type="color" class="form-control color-picker" id="primary_color" name="primary_color" 
+                           value="{{ theme.colors.primary_color if theme and theme.colors else '#ffffff' }}">
+                </div>
+
+                <div class="mb-3">
+                    <label for="secondary_color" class="form-label">Secondary Color</label>
+                    <input type="color" class="form-control color-picker" id="secondary_color" name="secondary_color"
+                           value="{{ theme.colors.secondary_color if theme and theme.colors else '#333333' }}">
+                </div>
+
+                <div class="mb-3">
+                    <label for="accent_color" class="form-label">Accent Color</label>
+                    <input type="color" class="form-control color-picker" id="accent_color" name="accent_color"
+                           value="{{ theme.colors.accent_color if theme and theme.colors else '#007bff' }}">
+                </div>
+
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="is_active" name="is_active" value="true"
+                               {% if theme and theme.is_active %}checked{% endif %}>
+                        <label class="form-check-label" for="is_active">Make Active Theme</label>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <button type="submit" class="btn btn-primary">Save Theme</button>
+                    <a href="{{ url_for('admin_custom.list_themes') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if theme %}
+    <div class="card mt-4">
+        <div class="card-header">
+            <h3>Theme Preview</h3>
+        </div>
+        <div class="card-body">
+            <div id="theme-preview">
+                <style>
+                    #theme-preview {
+                        padding: 20px;
+                        border-radius: 8px;
+                        margin-top: 20px;
+                    }
+                    .color-preview {
+                        width: 100px;
+                        height: 100px;
+                        margin: 10px;
+                        border-radius: 8px;
+                        display: inline-block;
+                        border: 1px solid #ddd;
+                    }
+                    .preview-text {
+                        margin-top: 10px;
+                        text-align: center;
+                    }
+                </style>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="color-preview" id="primary-preview"></div>
+                        <div class="preview-text">Primary Color</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="color-preview" id="secondary-preview"></div>
+                        <div class="preview-text">Secondary Color</div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="color-preview" id="accent-preview"></div>
+                        <div class="preview-text">Accent Color</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const colorInputs = document.querySelectorAll('.color-picker');
+        const previewElements = {
+            'primary_color': document.getElementById('primary-preview'),
+            'secondary_color': document.getElementById('secondary-preview'),
+            'accent_color': document.getElementById('accent-preview')
+        };
+
+        colorInputs.forEach(input => {
+            const previewElement = previewElements[input.id];
+            if (previewElement) {
+                previewElement.style.backgroundColor = input.value;
+            }
+
+            input.addEventListener('input', function(e) {
+                if (previewElement) {
+                    previewElement.style.backgroundColor = e.target.value;
                 }
             });
         });
-    </script>
-{% endblock %}
+    });
+</script>
 
-{% block edit_form %}
-    {{ super() }}
-    <style>
-        input[type="color"] {
-            width: 100px;
-            height: 40px;
-            padding: 2px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-    </style>
+<style>
+    .color-picker {
+        width: 100px !important;
+        height: 40px !important;
+        padding: 2px !important;
+        border: 1px solid #ccc !important;
+        border-radius: 4px !important;
+    }
+</style>
 {% endblock %}

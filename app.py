@@ -17,20 +17,48 @@ def create_app():
         "pool_recycle": 300,
         "pool_pre_ping": True,
     }
+    app.config["TEMPLATES_AUTO_RELOAD"] = True
+    app.config["FLASK_ADMIN_SWATCH"] = "cosmo"
     
-    # Initialize extensions
-    db.init_app(app)
-    login_manager.init_app(app)
-    login_manager.login_view = 'admin_custom.login'
-    csrf.init_app(app)
-    migrate.init_app(app, db)
-    ckeditor.init_app(app)
-    
-    # Register theme context processor
-    from utils.theme_manager import inject_theme
-    app.context_processor(inject_theme)
-    
-    return app
+    try:
+        # Initialize extensions
+        db.init_app(app)
+        login_manager.init_app(app)
+        login_manager.login_view = 'admin_custom.login'
+        csrf.init_app(app)
+        migrate.init_app(app, db)
+        ckeditor.init_app(app)
+        
+        # Configure template settings
+        app.jinja_env.add_extension('jinja2.ext.do')
+        app.jinja_env.trim_blocks = True
+        app.jinja_env.lstrip_blocks = True
+        
+        # Test database connection
+        with app.app_context():
+            db.engine.connect()
+            logger.info("Database connection successful")
+        
+        # Register theme context processor
+        from utils.theme_manager import inject_theme
+        app.context_processor(inject_theme)
+        
+        # Set default theme colors if not available
+        app.context_processor(lambda: {
+            'theme_colors': {
+                'primary': '#f8f5f2',
+                'secondary': '#2c3e50',
+                'accent': '#e67e22'
+            }
+        })
+        
+        logger.info("Application created successfully")
+        return app
+        
+    except Exception as e:
+        logger.error(f"Error creating application: {str(e)}")
+        logger.exception("Full traceback:")
+        raise
 
 app = create_app()
 
@@ -82,23 +110,36 @@ def setup_upload_directories():
 def register_extensions(app):
     """Register Flask extensions and blueprints."""
     try:
+        logger.info("Starting extension registration...")
+        
         # Import views and routes here to avoid circular imports
         from admin_routes import admin_bp
+        logger.info("Admin blueprint imported")
         
         # Register admin blueprint first
         app.register_blueprint(admin_bp)
+        logger.info("Admin blueprint registered")
         
         # Import and initialize admin views after blueprint registration
+        logger.info("Initializing admin views...")
         import admin_views
         admin = admin_views.init_admin(app)
+        logger.info("Admin views initialized successfully")
         
         # Import routes last to avoid circular dependencies
+        logger.info("Importing main routes...")
         import routes
+        logger.info("Main routes imported successfully")
         
         logger.info("All extensions and blueprints registered successfully")
         return app
+    except ImportError as ie:
+        logger.error(f"Import error during extension registration: {str(ie)}")
+        logger.exception("Import error traceback:")
+        raise
     except Exception as e:
-        app.logger.error(f"Error registering extensions: {str(e)}")
+        logger.error(f"Error registering extensions: {str(e)}")
+        logger.exception("Full error traceback:")
         raise
 
 with app.app_context():

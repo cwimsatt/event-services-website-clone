@@ -33,7 +33,11 @@
                 <tr>
                     <td>{{ theme.name }}</td>
                     <td>{{ 'Custom' if theme.is_custom else 'Default' }}</td>
-                    <td>{{ 'Active' if theme.is_active else 'Inactive' }}</td>
+                    <td>
+                        <span class="badge {% if theme.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                            {{ 'Active' if theme.is_active else 'Inactive' }}
+                        </span>
+                    </td>
                     <td>
                         <div class="d-flex align-items-center gap-2">
                             <div class="color-preview" style="width: 20px; height: 20px; background-color: {{ theme.colors.primary_color }}; border: 1px solid #ccc;"></div>
@@ -42,6 +46,13 @@
                         </div>
                     </td>
                     <td>
+                        <form action="{{ url_for('admin_custom.edit_theme', id=theme.id) }}" method="POST" class="d-inline" id="activate-form-{{ theme.id }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <input type="hidden" name="is_active" value="true">
+                            {% if not theme.is_active %}
+                            <button type="submit" class="btn btn-sm btn-success">Activate Theme</button>
+                            {% endif %}
+                        </form>
                         <a href="{{ url_for('admin_custom.edit_theme', id=theme.id) }}" class="btn btn-sm btn-primary">Edit</a>
                         {% if theme.is_custom %}
                         <form action="{{ url_for('admin_custom.delete_theme', id=theme.id) }}" method="POST" class="d-inline">

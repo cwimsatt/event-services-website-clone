@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if admin_view %}
+        {{ admin_view.name }} - {{ admin_view.admin.name }}
+    {% else %}
+        Admin Dashboard
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-5">
+    {% block messages %}
+        {{ super() }}
+    {% endblock %}
+
+    {% block admin_content %}
+        {% block body %}{% endblock %}
+        {% block admin_form %}{% endblock %}
+    {% endblock %}
+</div>
+{% endblock %}

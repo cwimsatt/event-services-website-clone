@@ -13,16 +13,22 @@ def init_admin(app):
             app,
             name='Event Services Admin',
             template_mode='bootstrap4',
+            base_template='admin/base.html',
             index_view=SecureAdminIndexView()
         )
         
         # Add model views with proper session management
         with app.app_context():
-            admin.add_view(CategoryModelView(Category, db.session))
-            admin.add_view(EventModelView(Event, db.session))
-            admin.add_view(TestimonialModelView(Testimonial, db.session))
-            admin.add_view(ContactModelView(Contact, db.session))
-            admin.add_view(ThemeModelView(Theme, db.session))
+            try:
+                admin.add_view(CategoryModelView(Category, db.session))
+                admin.add_view(EventModelView(Event, db.session))
+                admin.add_view(TestimonialModelView(Testimonial, db.session))
+                admin.add_view(ContactModelView(Contact, db.session))
+                admin.add_view(ThemeModelView(Theme, db.session))
+                app.logger.info("All admin views initialized successfully")
+            except Exception as view_error:
+                app.logger.error(f"Error adding admin views: {str(view_error)}")
+                raise
         
         app.logger.info("Flask-Admin initialized successfully")
         return admin
@@ -73,30 +79,40 @@ class ContactModelView(SecureModelView):
     can_create = False
 
 class ThemeModelView(SecureModelView):
-    column_list = ('name', 'slug', 'is_custom', 'is_active')
+    column_list = ('name', 'is_custom', 'is_active')
     column_searchable_list = ['name']
-    form_columns = ('name', 'slug', 'is_custom', 'is_active', 'colors')
-    form_excluded_columns = None
-    inline_models = [(ThemeColors, dict(
-        form_columns=['primary_color', 'secondary_color', 'accent_color']
-    ))]
-    create_template = 'admin/theme_form.html'
-    edit_template = 'admin/theme_form.html'
-
+    form_columns = ('name', 'is_custom', 'is_active')
+    can_edit = True
+    can_create = True
+    can_delete = True
+    edit_modal = False
+    create_modal = False
+    
+    def create_form(self):
+        form = super().create_form()
+        # Initialize with default theme colors
+        return form
+        
+    def edit_form(self, obj):
+        form = super().edit_form(obj)
+        return form
+    
     def on_model_change(self, form, model, is_created):
-        # Ensure only one theme is active at a time
+        # Handle theme activation
         if model.is_active:
             Theme.query.filter(Theme.id != model.id).update({'is_active': False})
             db.session.commit()
         
-        # Create default colors if none exist
+        # Ensure theme has colors
         if not model.colors:
             colors = ThemeColors(
                 theme=model,
-                primary_color='#000000',
-                secondary_color='#FFFFFF',
-                accent_color='#808080'
+                primary_color='#f8f5f2',
+                secondary_color='#2c3e50',
+                accent_color='#e67e22'
             )
             db.session.add(colors)
+        
+        return model
 
 # Admin initialization is now handled in app.py's register_extensions function
