@@ -117,11 +117,19 @@ class Theme(db.Model):
 
 class ThemeColors(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    theme_id = db.Column(db.Integer, db.ForeignKey('theme.id'), nullable=False)
-    primary_color = db.Column(db.String(7), default='#000000', nullable=False)  # Hex color code (#RRGGBB)
-    secondary_color = db.Column(db.String(7), default='#FFFFFF', nullable=False)
-    accent_color = db.Column(db.String(7), default='#808080', nullable=False)
-    theme = db.relationship('Theme', back_populates='colors')
+    theme_id = db.Column(db.Integer, db.ForeignKey('theme.id', ondelete='CASCADE'), nullable=False)
+    primary_color = db.Column(db.String(7), default='#f8f5f2', nullable=False)  # Hex color code (#RRGGBB)
+    secondary_color = db.Column(db.String(7), default='#2c3e50', nullable=False)
+    accent_color = db.Column(db.String(7), default='#e67e22', nullable=False)
+    theme = db.relationship('Theme', back_populates='colors', single_parent=True)
+
+    def __init__(self, **kwargs):
+        super(ThemeColors, self).__init__(**kwargs)
+        # Ensure hex color format
+        for color_attr in ['primary_color', 'secondary_color', 'accent_color']:
+            color_value = kwargs.get(color_attr)
+            if color_value and not color_value.startswith('#'):
+                setattr(self, color_attr, f'#{color_value.lstrip("#")}')
 
     def __repr__(self):
         return f'<ThemeColors for theme_id={self.theme_id}>'

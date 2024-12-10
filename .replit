@@ -36,7 +36,6 @@ task = "packager.installForAll"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "python main.py"
-waitForPort = 3000
 
 [[workflows.workflow]]
 name = "Database Migration"
@@ -50,7 +49,7 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "flask db migrate -m 'Fix theme colors relationship'"
+args = "flask db migrate -m \"Fix theme colors relationship\""
 
 [[workflows.workflow]]
 name = "Database Upgrade"
