@@ -117,78 +117,49 @@ class ThemeModelView(SecureModelView):
     def on_model_change(self, form, model, is_created):
         """Handle theme changes with proper validation and error handling."""
         try:
-            current_app.logger.info(f"Processing theme change for theme: {model.name} (id: {model.id})")
+            # Store original is_active state before processing
+            should_activate = model.is_active
             
-            # Store the original is_active state
-            original_is_active = model.is_active
+            # Process colors first
+            for color_field in ['primary_color', 'secondary_color', 'accent_color']:
+                color_value = getattr(form, color_field).data
+                if color_value and not color_value.startswith('#'):
+                    raise ValueError(f"Invalid color format for {color_field}. Must start with '#'")
             
-            # Process theme activation separately from other changes
-            if original_is_active:
-                current_app.logger.info(f"Activating theme: {model.name}")
-                try:
-                    # Use explicit transaction for theme activation
-                    with db.session.begin_nested():
-                        # First deactivate all themes
-                        db.session.execute(text("UPDATE theme SET is_active = false"))
-                        # Then activate only the current theme
-                        db.session.execute(
-                            text("UPDATE theme SET is_active = true WHERE id = :id"),
-                            {"id": model.id}
-                        )
-                        db.session.flush()
-                except Exception as e:
-                    current_app.logger.error(f"Error in theme activation transaction: {str(e)}")
-                    raise
+            if not model.colors:
+                colors = ThemeColors(
+                    theme=model,
+                    primary_color=form.primary_color.data or '#f8f5f2',
+                    secondary_color=form.secondary_color.data or '#2c3e50',
+                    accent_color=form.accent_color.data or '#e67e22'
+                )
+                db.session.add(colors)
             else:
-                # Check if this is the last active theme
-                active_themes = Theme.query.filter(Theme.is_active == True).count()
-                current_app.logger.debug(f"Active themes count: {active_themes}")
-                if active_themes <= 1 and not is_created and Theme.query.get(model.id).is_active:
-                    raise ValueError("Cannot deactivate the last active theme")
-                    
-                # If we're deactivating a theme, make sure we still have at least one active theme
-                if not is_created and Theme.query.get(model.id).is_active:
-                    active_count = Theme.query.filter(Theme.is_active == True).count()
-                    if active_count <= 1:
-                        raise ValueError("Cannot deactivate the last active theme")
-                
-                # Process theme colors
-                try:
-                    # Validate color format
-                    for color_field in ['primary_color', 'secondary_color', 'accent_color']:
-                        color_value = getattr(form, color_field).data
-                        if color_value and not color_value.startswith('#'):
-                            raise ValueError(f"Invalid color format for {color_field}. Must start with '#'")
-                    
-                    # Update or create theme colors
-                    if not model.colors:
-                        current_app.logger.info(f"Creating new colors for theme: {model.name}")
-                        colors = ThemeColors(
-                            theme=model,
-                            primary_color=form.primary_color.data or '#f8f5f2',
-                            secondary_color=form.secondary_color.data or '#2c3e50',
-                            accent_color=form.accent_color.data or '#e67e22'
-                        )
-                        db.session.add(colors)
-                    else:
-                        current_app.logger.info(f"Updating colors for theme: {model.name}")
-                        model.colors.primary_color = form.primary_color.data or model.colors.primary_color
-                        model.colors.secondary_color = form.secondary_color.data or model.colors.secondary_color
-                        model.colors.accent_color = form.accent_color.data or model.colors.accent_color
-                except Exception as color_error:
-                    current_app.logger.error(f"Error processing theme colors: {str(color_error)}")
-                    raise ValueError(f"Error processing theme colors: {str(color_error)}")
+                model.colors.primary_color = form.primary_color.data or model.colors.primary_color
+                model.colors.secondary_color = form.secondary_color.data or model.colors.secondary_color
+                model.colors.accent_color = form.accent_color.data or model.colors.accent_color
 
-            current_app.logger.info(f"Theme {model.name} processed successfully")
+            # Save changes before handling activation
+            db.session.flush()
+            
+            # Handle theme activation separately using direct SQL
+            if should_activate:
+                current_app.logger.info(f"Activating theme ID {model.id}")
+                # First deactivate all themes
+                db.session.execute(text("UPDATE theme SET is_active = false"))
+                # Then activate only the selected theme
+                db.session.execute(
+                    text("UPDATE theme SET is_active = true WHERE id = :id"),
+                    {"id": model.id}
+                )
+                # Refresh the model to get the updated is_active state
+                db.session.refresh(model)
+            
             return model
             
-        except ValueError as e:
-            current_app.logger.error(f"Theme activation error: {str(e)}")
+        except Exception as e:
+            current_app.logger.error(f"Error in theme processing: {str(e)}")
             db.session.rollback()
             raise ValueError(str(e))
-        except Exception as e:
-            current_app.logger.error(f"Unexpected error in theme activation: {str(e)}")
-            db.session.rollback()
-            raise
 
 # Admin initialization is now handled in app.py's register_extensions function
