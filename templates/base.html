@@ -19,9 +19,9 @@
     
     <style>
         :root {
-            --primary-color: {{ theme_colors.primary }};
-            --secondary-color: {{ theme_colors.secondary }};
-            --accent-color: {{ theme_colors.accent }};
+            --primary-color: {{ theme_colors.primary if theme_colors else '#ffffff' }};
+            --secondary-color: {{ theme_colors.secondary if theme_colors else '#333333' }};
+            --accent-color: {{ theme_colors.accent if theme_colors else '#007bff' }};
         }
         
         body {
@@ -31,7 +31,7 @@
         
         .navbar {
             background-color: var(--secondary-color) !important;
-            transition: background-color 0.3s ease;
+            transition: all 0.3s ease;
         }
         
         .navbar-brand, .nav-link {

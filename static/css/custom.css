@@ -97,12 +97,12 @@ body {
 
 /* Navigation */
 .navbar {
-    transition: all 0.3s ease;
     padding: 1rem 2rem;
+    background-color: var(--secondary-color);
 }
 
 .navbar.scrolled {
-    background-color: var(--secondary-color) !important;
+    background-color: var(--secondary-color);
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
