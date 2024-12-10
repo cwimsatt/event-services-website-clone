@@ -8,37 +8,43 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('Gallery grid found, initializing...');
     
-    // Initialize Masonry layout
+    // Initialize Masonry layout for multiple grids
     const initializeMasonry = function() {
         console.log('Initializing gallery with Masonry...');
-        try {
-            if (typeof Masonry !== 'function') {
-                throw new Error('Masonry library not loaded');
+        const grids = document.querySelectorAll('.gallery-grid');
+        const masonryInstances = [];
+
+        grids.forEach((grid, index) => {
+            try {
+                if (typeof Masonry !== 'function') {
+                    throw new Error('Masonry library not loaded');
+                }
+
+                console.log(`Initializing Masonry for grid ${index + 1}`);
+                const masonry = new Masonry(grid, {
+                    itemSelector: '.gallery-item',
+                    columnWidth: '.gallery-item',
+                    percentPosition: true,
+                    transitionDuration: '0.3s'
+                });
+
+                masonryInstances.push(masonry);
+                console.log(`Masonry initialized successfully for grid ${index + 1}`);
+            } catch (error) {
+                console.error(`Gallery initialization error for grid ${index + 1}:`, error);
+                // Fallback to basic grid layout
+                grid.style.display = 'grid';
+                grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
+                grid.style.gap = '1rem';
             }
+        });
 
-            const masonry = new Masonry(grid, {
-                itemSelector: '.gallery-item',
-                columnWidth: '.gallery-item',
-                percentPosition: true,
-                transitionDuration: '0.3s'
-            });
-
-            console.log('Masonry initialized successfully');
-            return masonry;
-        } catch (error) {
-            console.error('Gallery initialization error:', error);
-            // Fallback to basic grid layout
-            grid.style.display = 'grid';
-            grid.style.gridTemplateColumns = 'repeat(auto-fill, minmax(300px, 1fr))';
-            grid.style.gap = '1rem';
-            return null;
-        }
+        return masonryInstances;
     };
 
     // Initialize filtering functionality
-    const initializeFilters = function(masonry) {
+    const initializeFilters = function(masonryInstances) {
         const filterButtons = document.querySelectorAll('.filter-btn');
-        const items = document.querySelectorAll('.gallery-item');
         
         if (!filterButtons.length) return;
 
@@ -53,21 +59,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 filterButtons.forEach(btn => btn.classList.remove('active'));
                 this.classList.add('active');
 
-                // Filter gallery items
-                items.forEach(item => {
-                    if (category === 'all' || item.getAttribute('data-category') === category) {
-                        item.style.display = '';
-                        item.classList.add('show');
-                    } else {
-                        item.style.display = 'none';
-                        item.classList.remove('show');
-                    }
-                });
-
-                // Re-layout Masonry after filtering
-                if (masonry) {
-                    setTimeout(() => masonry.layout(), 100);
+                // Destroy existing Masonry instances
+                if (masonryInstances && masonryInstances.length) {
+                    masonryInstances.forEach(masonry => {
+                        if (masonry && masonry.destroy) {
+                            masonry.destroy();
+                        }
+                    });
                 }
+
+                // Wait for DOM updates
+                setTimeout(() => {
+                    // Reinitialize Masonry
+                    const newMasonryInstances = initializeMasonry();
+                    
+                    // Update layout after a short delay to ensure proper positioning
+                    setTimeout(() => {
+                        newMasonryInstances.forEach(masonry => {
+                            if (masonry && masonry.layout) {
+                                masonry.layout();
+                            }
+                        });
+                    }, 100);
+                }, 100);
             });
         });
         console.log('Filters initialized');
@@ -108,21 +122,23 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Wait for images to load before initializing
+    const grids = document.querySelectorAll('.gallery-grid');
+    if (!grids.length) {
+        console.log('No gallery grids found - skipping initialization');
+        return;
+    }
+
     if (typeof imagesLoaded === 'function') {
         console.log('Using imagesLoaded for initialization');
-        imagesLoaded(grid, function() {
-            const masonry = initializeMasonry();
-            if (masonry) {
-                initializeFilters(masonry);
-                initializeLazyLoading(masonry);
-            }
+        imagesLoaded(grids, function() {
+            const masonryInstances = initializeMasonry();
+            initializeFilters(masonryInstances);
+            initializeLazyLoading(masonryInstances);
         });
     } else {
         console.warn('imagesLoaded not available, falling back to direct initialization');
-        const masonry = initializeMasonry();
-        if (masonry) {
-            initializeFilters(masonry);
-            initializeLazyLoading(masonry);
-        }
+        const masonryInstances = initializeMasonry();
+        initializeFilters(masonryInstances);
+        initializeLazyLoading(masonryInstances);
     }
 });
