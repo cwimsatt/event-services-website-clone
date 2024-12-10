@@ -146,26 +146,53 @@ class ThemeModelView(SecureModelView):
             if should_activate:
                 try:
                     current_app.logger.info(f"Starting theme activation for ID {model.id}")
-                    # First deactivate all themes
-                    deactivate_stmt = text("UPDATE theme SET is_active = FALSE")
-                    db.session.execute(deactivate_stmt)
-                    current_app.logger.debug("All themes deactivated")
                     
-                    # Then activate only the selected theme
-                    activate_stmt = text("UPDATE theme SET is_active = TRUE WHERE id = :theme_id")
-                    db.session.execute(activate_stmt, {"theme_id": model.id})
-                    current_app.logger.debug(f"Theme {model.id} activated")
+                    # Start a nested transaction for isolation
+                    db.session.begin_nested()
                     
-                    # Ensure changes are saved
-                    db.session.flush()
-                    
-                    # Refresh the model to get the updated is_active state
-                    db.session.refresh(model)
-                    current_app.logger.info(f"Theme activation completed successfully for ID {model.id}")
+                    try:
+                        # First verify the theme exists
+                        verify_theme_stmt = text("SELECT id FROM theme WHERE id = :theme_id")
+                        theme_exists = db.session.execute(verify_theme_stmt, {"theme_id": model.id}).scalar()
+                        if not theme_exists:
+                            raise ValueError(f"Theme with ID {model.id} does not exist")
+                        
+                        # First deactivate all themes atomically
+                        deactivate_stmt = text("UPDATE theme SET is_active = FALSE")
+                        result = db.session.execute(deactivate_stmt)
+                        current_app.logger.info(f"Deactivated {result.rowcount} themes")
+                        
+                        # Then activate only the selected theme
+                        activate_stmt = text("UPDATE theme SET is_active = TRUE WHERE id = :theme_id")
+                        result = db.session.execute(activate_stmt, {"theme_id": model.id})
+                        
+                        if result.rowcount != 1:
+                            raise ValueError(f"Failed to activate theme {model.id}")
+                            
+                        current_app.logger.info(f"Activated theme {model.id}")
+                        
+                        # Verify exactly one theme is active
+                        verify_stmt = text("SELECT COUNT(*) FROM theme WHERE is_active = TRUE")
+                        active_count = db.session.execute(verify_stmt).scalar()
+                        
+                        if active_count != 1:
+                            raise ValueError(f"Expected exactly one active theme, found {active_count}")
+                        
+                        # If everything is correct, commit the nested transaction
+                        db.session.commit()
+                        current_app.logger.info(f"Theme activation completed successfully for ID {model.id}")
+                        
+                        # Refresh the model to get the updated state
+                        db.session.refresh(model)
+                        
+                    except Exception as sql_error:
+                        current_app.logger.error(f"SQL error during theme activation: {str(sql_error)}")
+                        db.session.rollback()
+                        raise ValueError(f"Failed to activate theme: {str(sql_error)}")
+                        
                 except Exception as e:
                     current_app.logger.error(f"Database error during theme activation: {str(e)}")
-                    db.session.rollback()
-                    raise ValueError(f"Failed to activate theme: {str(e)}")
+                    raise ValueError(str(e))
             
             return model
             
