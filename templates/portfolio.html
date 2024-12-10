@@ -13,74 +13,117 @@
             </a>
             {% for category in categories %}
             <a href="{{ url_for('portfolio', category_id=category.id) }}" 
-               class="btn btn-outline-primary me-2 {% if category_id != 'all' and category_id == category.id|string %}active{% endif %}">
+               class="btn btn-outline-primary me-2 {% if active_category != 'all' and active_category|string == category.id|string %}active{% endif %}">
                 {{ category.name }}
             </a>
             {% endfor %}
         </div>
 
         <!-- Categorized Gallery Grid -->
-        {% if active_category != 'all' %}
-            <div class="category-section mb-5">
-                <h3 class="category-title mt-4 mb-3">{{ events[0].category.name if events }}</h3>
-                <div class="gallery-grid">
-                {% for event in events %}
-        {% else %}
-            {% set last_category = None %}
-            {% for event in events %}
-                {% if last_category != event.category %}
-                    {% if not loop.first %}
-                        </div> <!-- Close previous gallery-grid -->
-                    </div> <!-- Close previous category-section -->
-                    {% endif %}
-                    <div class="category-section mb-5">
-                        <h3 class="category-title mt-4 mb-3">{{ event.category.name }}</h3>
-                        <div class="gallery-grid" data-category="{{ event.category.name }}">
-                    {% set last_category = event.category %}
-                {% endif %}
-        {% endif %}
-            
-            <div class="gallery-item" data-sequence="{{ event.sequence or 0 }}">
-                {% if event.image_path %}
-                    {% set image_path = url_for('static', filename=event.image_path) %}
-                    
-                    {% if event.video_path %}
-                    <div class="video-container">
-                        <div class="video-thumbnail">
-                            <img src="{{ image_path }}" 
-                                 alt="{{ event.title }}" 
-                                 class="img-fluid lazy" 
-                                 data-src="{{ image_path }}"
-                                 onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/placeholder.svg') }}';">
-                            <div class="play-overlay">
-                                <i class="fas fa-play"></i>
+        {% if events %}
+            {% if active_category != 'all' %}
+                <div class="category-section mb-5">
+                    <h3 class="category-title mt-4 mb-3">{{ events[0].category.name }}</h3>
+                    <div class="gallery-grid">
+                        {% for event in events %}
+                            <div class="gallery-item" data-sequence="{{ event.sequence or 0 }}">
+                                {% if event.image_path %}
+                                    {% set image_path = url_for('static', filename=event.image_path) %}
+                                    {% if event.video_path %}
+                                        <div class="video-container">
+                                            <div class="video-thumbnail">
+                                                <img src="{{ image_path }}" 
+                                                     alt="{{ event.title }}" 
+                                                     class="img-fluid lazy" 
+                                                     data-src="{{ image_path }}"
+                                                     onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/placeholder.svg') }}';">
+                                                <div class="play-overlay">
+                                                    <i class="fas fa-play"></i>
+                                                </div>
+                                            </div>
+                                            <video controls preload="none" poster="{{ image_path }}">
+                                                <source src="{{ url_for('static', filename=event.video_path) }}" type="video/mp4">
+                                                Your browser does not support the video tag.
+                                            </video>
+                                        </div>
+                                    {% else %}
+                                        <a href="{{ image_path }}" class="glightbox">
+                                            <img src="{{ image_path }}" 
+                                                 alt="{{ event.title }}" 
+                                                 class="img-fluid lazy" 
+                                                 data-src="{{ image_path }}">
+                                        </a>
+                                    {% endif %}
+                                {% endif %}
+                                <div class="gallery-caption">
+                                    <h4>{{ event.title }}</h4>
+                                    <p>{{ event.description }}</p>
+                                    <span class="event-date">{{ event.date.strftime('%B %Y') }}</span>
+                                </div>
                             </div>
-                        </div>
-                        <video controls preload="none" poster="{{ image_path }}">
-                            <source src="{{ url_for('static', filename=event.video_path) }}" type="video/mp4">
-                            Your browser does not support the video tag.
-                        </video>
+                        {% endfor %}
                     </div>
-                    {% else %}
-                    <a href="{{ image_path }}" class="glightbox">
-                        <img src="{{ image_path }}" 
-                             alt="{{ event.title }}" 
-                             class="img-fluid lazy" 
-                             data-src="{{ image_path }}">
-                    </a>
-                    {% endif %}
-                {% endif %}
-                <div class="gallery-caption">
-                    <h4>{{ event.title }}</h4>
-                    <p>{{ event.description }}</p>
-                    <span class="event-date">{{ event.date.strftime('%B %Y') }}</span>
                 </div>
-            </div>
-            {% if loop.last %}
-                    </div> <!-- Close gallery-grid -->
-                    </div> <!-- Close category-section -->
+            {% else %}
+                {% set current_category = namespace(value=None) %}
+                {% for event in events %}
+                    {% if current_category.value != event.category %}
+                        {% if not loop.first %}
+                            </div> <!-- Close previous gallery-grid -->
+                        </div> <!-- Close previous category-section -->
+                        {% endif %}
+                        
+                        <div class="category-section mb-5">
+                            <h3 class="category-title mt-4 mb-3">{{ event.category.name }}</h3>
+                            <div class="gallery-grid">
+                        {% set current_category.value = event.category %}
+                    {% endif %}
+                    
+                    <div class="gallery-item" data-sequence="{{ event.sequence or 0 }}">
+                        {% if event.image_path %}
+                            {% set image_path = url_for('static', filename=event.image_path) %}
+                            {% if event.video_path %}
+                                <div class="video-container">
+                                    <div class="video-thumbnail">
+                                        <img src="{{ image_path }}" 
+                                             alt="{{ event.title }}" 
+                                             class="img-fluid lazy" 
+                                             data-src="{{ image_path }}"
+                                             onerror="this.onerror=null; this.src='{{ url_for('static', filename='images/placeholder.svg') }}';">
+                                        <div class="play-overlay">
+                                            <i class="fas fa-play"></i>
+                                        </div>
+                                    </div>
+                                    <video controls preload="none" poster="{{ image_path }}">
+                                        <source src="{{ url_for('static', filename=event.video_path) }}" type="video/mp4">
+                                        Your browser does not support the video tag.
+                                    </video>
+                                </div>
+                            {% else %}
+                                <a href="{{ image_path }}" class="glightbox">
+                                    <img src="{{ image_path }}" 
+                                         alt="{{ event.title }}" 
+                                         class="img-fluid lazy" 
+                                         data-src="{{ image_path }}">
+                                </a>
+                            {% endif %}
+                        {% endif %}
+                        <div class="gallery-caption">
+                            <h4>{{ event.title }}</h4>
+                            <p>{{ event.description }}</p>
+                            <span class="event-date">{{ event.date.strftime('%B %Y') }}</span>
+                        </div>
+                    </div>
+                {% endfor %}
+                
+                {% if events %}
+                    </div> <!-- Close last gallery-grid -->
+                </div> <!-- Close last category-section -->
                 {% endif %}
-            {% endfor %}
+            {% endif %}
+        {% else %}
+            <p class="text-center">No events found.</p>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
