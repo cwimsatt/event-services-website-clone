@@ -25,6 +25,7 @@
             {% if last_category != event.category %}
                 {% if not loop.first %}
                     </div> <!-- Close previous gallery-grid -->
+                </div> <!-- Close previous category-section -->
                 {% endif %}
                 <div class="category-section mb-5">
                     <h3 class="category-title mt-4 mb-3">{{ event.category.name }}</h3>
