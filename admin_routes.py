@@ -88,10 +88,17 @@ def new_theme():
 
     if request.method == 'POST':
         try:
+            # Validate theme name
+            theme_name = request.form.get('name')
+            if not theme_name:
+                current_app.logger.error("Theme name is required")
+                flash('Theme name is required', 'danger')
+                return render_template('admin/theme_form.html')
+                
             # Create new theme
             theme = Theme(
-                name=request.form.get('name'),
-                slug=request.form.get('name').lower().replace(' ', '-'),
+                name=theme_name,
+                slug=theme_name.lower().replace(' ', '-'),
                 is_custom=True,
                 is_active=request.form.get('is_active') == 'true'
             )
@@ -131,8 +138,15 @@ def edit_theme(id):
                 current_app.logger.debug(f"Form data: {request.form}")
                 
                 # Basic theme updates
-                theme.name = request.form.get('name')
-                theme.slug = request.form.get('name').lower().replace(' ', '-')
+                # Validate theme name
+                theme_name = request.form.get('name')
+                if not theme_name:
+                    current_app.logger.error("Theme name is required")
+                    flash('Theme name is required', 'danger')
+                    return render_template('admin/theme_form.html', theme=theme)
+                
+                theme.name = theme_name
+                theme.slug = theme_name.lower().replace(' ', '-')
                 should_activate = request.form.get('is_active') == 'true'
                 
                 # Update colors
