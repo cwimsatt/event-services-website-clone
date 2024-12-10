@@ -7,7 +7,7 @@ from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
 
-# Setup logging
+# Setup logging - and test git change detection
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
