@@ -349,10 +349,16 @@ def new_category():
         return redirect(url_for('index'))
 
     if request.method == 'POST':
+        columns = request.form.get('columns_per_row', type=int, default=3)
+        if not 1 <= columns <= 6:
+            flash('Columns per row must be between 1 and 6', 'danger')
+            return render_template('admin/category_form.html')
+            
         category = Category(
             name=request.form.get('name'),
             slug=request.form.get('name').lower().replace(' ', '-'),
-            description=request.form.get('description')
+            description=request.form.get('description'),
+            columns_per_row=columns
         )
         db.session.add(category)
         db.session.commit()
@@ -370,9 +376,15 @@ def edit_category(id):
 
     category = Category.query.get_or_404(id)
     if request.method == 'POST':
+        columns = request.form.get('columns_per_row', type=int, default=3)
+        if not 1 <= columns <= 6:
+            flash('Columns per row must be between 1 and 6', 'danger')
+            return render_template('admin/category_form.html', category=category)
+            
         category.name = request.form.get('name')
         category.slug = request.form.get('name').lower().replace(' ', '-')
         category.description = request.form.get('description')
+        category.columns_per_row = columns
         db.session.commit()
         flash('Category updated successfully')
         return redirect(url_for('admin_custom.list_categories'))
