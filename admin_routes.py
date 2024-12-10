@@ -111,6 +111,7 @@ def new_theme():
         except Exception as e:
             current_app.logger.error(f"Error creating theme: {str(e)}")
             flash('Error creating theme', 'danger')
+            db.session.rollback()
             
     return render_template('admin/theme_form.html')
 
@@ -121,45 +122,85 @@ def edit_theme(id):
         flash('Access denied. Admin privileges required.')
         return redirect(url_for('index'))
 
-    theme = Theme.query.get_or_404(id)
-    if request.method == 'POST':
-        try:
-            theme.name = request.form.get('name')
-            theme.slug = request.form.get('name').lower().replace(' ', '-')
-            should_activate = request.form.get('is_active') == 'true'
-            
-            if theme.colors:
-                theme.colors.primary_color = request.form.get('primary_color', '#ffffff')
-                theme.colors.secondary_color = request.form.get('secondary_color', '#333333')
-                theme.colors.accent_color = request.form.get('accent_color', '#007bff')
-            else:
-                colors = ThemeColors(
-                    theme=theme,
-                    primary_color=request.form.get('primary_color', '#ffffff'),
-                    secondary_color=request.form.get('secondary_color', '#333333'),
-                    accent_color=request.form.get('accent_color', '#007bff')
-                )
-                db.session.add(colors)
-            
-            # Update the theme in the database
+    try:
+        theme = Theme.query.get_or_404(id)
+        
+        if request.method == 'POST':
             try:
-                # Handle basic theme updates
-                db.session.commit()
-                current_app.logger.info(f"Theme {theme.id} basic properties updated successfully")
-
-                # Theme activation is handled by the admin model view
+                current_app.logger.info(f"Processing theme edit request for ID: {id}")
+                current_app.logger.debug(f"Form data: {request.form}")
+                
+                # Basic theme updates
+                theme.name = request.form.get('name')
+                theme.slug = request.form.get('name').lower().replace(' ', '-')
+                should_activate = request.form.get('is_active') == 'true'
+                
+                # Update colors
+                try:
+                    if theme.colors:
+                        theme.colors.primary_color = request.form.get('primary_color', '#ffffff')
+                        theme.colors.secondary_color = request.form.get('secondary_color', '#333333')
+                        theme.colors.accent_color = request.form.get('accent_color', '#007bff')
+                    else:
+                        colors = ThemeColors(
+                            theme=theme,
+                            primary_color=request.form.get('primary_color', '#ffffff'),
+                            secondary_color=request.form.get('secondary_color', '#333333'),
+                            accent_color=request.form.get('accent_color', '#007bff')
+                        )
+                        db.session.add(colors)
+                    
+                    # Save color changes
+                    db.session.flush()
+                    current_app.logger.info("Theme colors updated successfully")
+                    
+                except Exception as color_error:
+                    current_app.logger.error(f"Error updating theme colors: {str(color_error)}")
+                    db.session.rollback()
+                    flash(f'Error updating theme colors: {str(color_error)}', 'danger')
+                    return render_template('admin/theme_form.html', theme=theme)
+                
+                # Handle theme activation if requested
                 if should_activate:
-                    current_app.logger.info(f"Theme activation will be handled by admin model view for theme {theme.id}")
+                    try:
+                        current_app.logger.info(f"Processing theme activation for theme {id}")
+                        
+                        # Deactivate all themes first
+                        db.session.execute(text("UPDATE theme SET is_active = FALSE"))
+                        
+                        # Activate the current theme
+                        result = db.session.execute(
+                            text("UPDATE theme SET is_active = TRUE WHERE id = :theme_id"),
+                            {"theme_id": theme.id}
+                        )
+                        
+                        if result.rowcount != 1:
+                            raise ValueError(f"Theme activation failed: Updated {result.rowcount} rows")
+                            
+                        current_app.logger.info(f"Theme {id} activated successfully")
+                        
+                    except Exception as activation_error:
+                        current_app.logger.error(f"Theme activation failed: {str(activation_error)}")
+                        db.session.rollback()
+                        flash(f'Error activating theme: {str(activation_error)}', 'danger')
+                        return render_template('admin/theme_form.html', theme=theme)
+                
+                # Commit all changes
+                db.session.commit()
+                flash('Theme updated successfully', 'success')
+                return redirect(url_for('admin_custom.list_themes'))
+                
             except Exception as e:
+                current_app.logger.error(f"Error updating theme: {str(e)}")
                 db.session.rollback()
-                current_app.logger.error(f"Error updating theme {theme.id}: {str(e)}")
-                raise
-            flash('Theme updated successfully')
-            return redirect(url_for('admin_custom.list_themes'))
-        except Exception as e:
-            current_app.logger.error(f"Error updating theme: {str(e)}")
-            flash('Error updating theme', 'danger')
-            
+                flash(f'Error updating theme: {str(e)}', 'danger')
+                return render_template('admin/theme_form.html', theme=theme)
+    
+    except Exception as outer_error:
+        current_app.logger.error(f"Error accessing theme {id}: {str(outer_error)}")
+        flash('Error accessing theme', 'danger')
+        return redirect(url_for('admin_custom.list_themes'))
+        
     return render_template('admin/theme_form.html', theme=theme)
 
 @admin_bp.route('/admin/theme/<int:id>/delete', methods=['POST'])
@@ -169,18 +210,20 @@ def delete_theme(id):
         flash('Access denied. Admin privileges required.')
         return redirect(url_for('index'))
 
-    theme = Theme.query.get_or_404(id)
-    if not theme.is_custom:
-        flash('Cannot delete default theme')
-        return redirect(url_for('admin_custom.list_themes'))
-        
     try:
+        theme = Theme.query.get_or_404(id)
+        if not theme.is_custom:
+            flash('Cannot delete default theme', 'danger')
+            return redirect(url_for('admin_custom.list_themes'))
+            
         db.session.delete(theme)
         db.session.commit()
-        flash('Theme deleted successfully')
+        flash('Theme deleted successfully', 'success')
+        
     except Exception as e:
         current_app.logger.error(f"Error deleting theme: {str(e)}")
         flash('Error deleting theme', 'danger')
+        db.session.rollback()
         
     return redirect(url_for('admin_custom.list_themes'))
 
@@ -212,6 +255,7 @@ def delete_file(id, file_type):
         db.session.commit()
     except Exception as e:
         flash(f'Error deleting file: {str(e)}', 'error')
+        db.session.rollback()
 
     return redirect(url_for('admin_custom.edit_event', id=id))
 
@@ -320,10 +364,16 @@ def new_event():
         except ValueError as e:
             flash(str(e))
             return render_template('admin/event_form.html', categories=categories)
-        db.session.add(event)
-        db.session.commit()
-        flash('Event created successfully')
-        return redirect(url_for('admin_custom.dashboard'))
+            
+        try:
+            db.session.add(event)
+            db.session.commit()
+            flash('Event created successfully')
+            return redirect(url_for('admin_custom.dashboard'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating event: {str(e)}', 'danger')
+            return render_template('admin/event_form.html', categories=categories)
 
     return render_template('admin/event_form.html', categories=categories)
 
@@ -442,10 +492,16 @@ def delete_event(id):
         flash('Access denied. Admin privileges required.')
         return redirect(url_for('index'))
 
-    event = Event.query.get_or_404(id)
-    db.session.delete(event)
-    db.session.commit()
-    flash('Event deleted successfully')
+    try:
+        event = Event.query.get_or_404(id)
+        db.session.delete(event)
+        db.session.commit()
+        flash('Event deleted successfully', 'success')
+    except Exception as e:
+        current_app.logger.error(f"Error deleting event {id}: {str(e)}")
+        flash(f'Error deleting event: {str(e)}', 'danger')
+        db.session.rollback()
+        
     return redirect(url_for('admin_custom.dashboard'))
 
 @admin_bp.route('/admin/categories')
@@ -470,16 +526,22 @@ def new_category():
             flash('Columns per row must be between 1 and 6', 'danger')
             return render_template('admin/category_form.html')
             
-        category = Category(
-            name=request.form.get('name'),
-            slug=request.form.get('name').lower().replace(' ', '-'),
-            description=request.form.get('description'),
-            columns_per_row=columns
-        )
-        db.session.add(category)
-        db.session.commit()
-        flash('Category created successfully')
-        return redirect(url_for('admin_custom.list_categories'))
+        try:
+            category = Category(
+                name=request.form.get('name'),
+                slug=request.form.get('name').lower().replace(' ', '-'),
+                description=request.form.get('description'),
+                columns_per_row=columns
+            )
+            db.session.add(category)
+            db.session.commit()
+            flash('Category created successfully', 'success')
+            return redirect(url_for('admin_custom.list_categories'))
+        except Exception as e:
+            current_app.logger.error(f"Error creating category: {str(e)}")
+            flash(f'Error creating category: {str(e)}', 'danger')
+            db.session.rollback()
+            return render_template('admin/category_form.html')
 
     return render_template('admin/category_form.html')
 
@@ -490,22 +552,34 @@ def edit_category(id):
         flash('Access denied. Admin privileges required.')
         return redirect(url_for('index'))
 
-    category = Category.query.get_or_404(id)
-    if request.method == 'POST':
-        columns = request.form.get('columns_per_row', type=int, default=3)
-        if not 1 <= columns <= 6:
-            flash('Columns per row must be between 1 and 6', 'danger')
-            return render_template('admin/category_form.html', category=category)
+    try:
+        category = Category.query.get_or_404(id)
+        if request.method == 'POST':
+            columns = request.form.get('columns_per_row', type=int, default=3)
+            if not 1 <= columns <= 6:
+                flash('Columns per row must be between 1 and 6', 'danger')
+                return render_template('admin/category_form.html', category=category)
+                
+            category.name = request.form.get('name')
+            category.slug = request.form.get('name').lower().replace(' ', '-')
+            category.description = request.form.get('description')
+            category.columns_per_row = columns
             
-        category.name = request.form.get('name')
-        category.slug = request.form.get('name').lower().replace(' ', '-')
-        category.description = request.form.get('description')
-        category.columns_per_row = columns
-        db.session.commit()
-        flash('Category updated successfully')
+            try:
+                db.session.commit()
+                flash('Category updated successfully', 'success')
+                return redirect(url_for('admin_custom.list_categories'))
+            except Exception as e:
+                current_app.logger.error(f"Error updating category {id}: {str(e)}")
+                flash(f'Error updating category: {str(e)}', 'danger')
+                db.session.rollback()
+                
+        return render_template('admin/category_form.html', category=category)
+        
+    except Exception as e:
+        current_app.logger.error(f"Error accessing category {id}: {str(e)}")
+        flash(f'Error accessing category: {str(e)}', 'danger')
         return redirect(url_for('admin_custom.list_categories'))
-
-    return render_template('admin/category_form.html', category=category)
 
 @admin_bp.route('/admin/category/<int:id>/delete', methods=['POST'])
 @login_required
@@ -514,12 +588,18 @@ def delete_category(id):
         flash('Access denied. Admin privileges required.')
         return redirect(url_for('index'))
 
-    category = Category.query.get_or_404(id)
-    if Event.query.filter_by(category_id=category.id).first():
-        flash('Cannot delete category that has events')
-        return redirect(url_for('admin_custom.list_categories'))
+    try:
+        category = Category.query.get_or_404(id)
+        if Event.query.filter_by(category_id=category.id).first():
+            flash('Cannot delete category that has events', 'danger')
+            return redirect(url_for('admin_custom.list_categories'))
 
-    db.session.delete(category)
-    db.session.commit()
-    flash('Category deleted successfully')
+        db.session.delete(category)
+        db.session.commit()
+        flash('Category deleted successfully', 'success')
+    except Exception as e:
+        current_app.logger.error(f"Error deleting category {id}: {str(e)}")
+        flash(f'Error deleting category: {str(e)}', 'danger')
+        db.session.rollback()
+        
     return redirect(url_for('admin_custom.list_categories'))
