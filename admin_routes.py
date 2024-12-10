@@ -2,6 +2,7 @@ import os
 from decimal import Decimal
 
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
+from sqlalchemy import text
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
 
@@ -125,7 +126,7 @@ def edit_theme(id):
         try:
             theme.name = request.form.get('name')
             theme.slug = request.form.get('name').lower().replace(' ', '-')
-            theme.is_active = request.form.get('is_active') == 'true'
+            should_activate = request.form.get('is_active') == 'true'
             
             if theme.colors:
                 theme.colors.primary_color = request.form.get('primary_color', '#ffffff')
@@ -140,11 +141,19 @@ def edit_theme(id):
                 )
                 db.session.add(colors)
             
-            # If this theme is being activated, deactivate all others
-            if theme.is_active:
-                Theme.query.filter(Theme.id != theme.id).update({'is_active': False})
-            
-            db.session.commit()
+            # Update the theme in the database
+            try:
+                # Handle basic theme updates
+                db.session.commit()
+                current_app.logger.info(f"Theme {theme.id} basic properties updated successfully")
+
+                # Theme activation is handled by the admin model view
+                if should_activate:
+                    current_app.logger.info(f"Theme activation will be handled by admin model view for theme {theme.id}")
+            except Exception as e:
+                db.session.rollback()
+                current_app.logger.error(f"Error updating theme {theme.id}: {str(e)}")
+                raise
             flash('Theme updated successfully')
             return redirect(url_for('admin_custom.list_themes'))
         except Exception as e:

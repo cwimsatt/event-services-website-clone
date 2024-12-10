@@ -142,18 +142,30 @@ class ThemeModelView(SecureModelView):
             # Save changes before handling activation
             db.session.flush()
             
-            # Handle theme activation separately using direct SQL
+            # Handle theme activation separately using direct SQL for atomicity
             if should_activate:
-                current_app.logger.info(f"Activating theme ID {model.id}")
-                # First deactivate all themes
-                db.session.execute(text("UPDATE theme SET is_active = false"))
-                # Then activate only the selected theme
-                db.session.execute(
-                    text("UPDATE theme SET is_active = true WHERE id = :id"),
-                    {"id": model.id}
-                )
-                # Refresh the model to get the updated is_active state
-                db.session.refresh(model)
+                try:
+                    current_app.logger.info(f"Starting theme activation for ID {model.id}")
+                    # First deactivate all themes
+                    deactivate_stmt = text("UPDATE theme SET is_active = FALSE")
+                    db.session.execute(deactivate_stmt)
+                    current_app.logger.debug("All themes deactivated")
+                    
+                    # Then activate only the selected theme
+                    activate_stmt = text("UPDATE theme SET is_active = TRUE WHERE id = :theme_id")
+                    db.session.execute(activate_stmt, {"theme_id": model.id})
+                    current_app.logger.debug(f"Theme {model.id} activated")
+                    
+                    # Ensure changes are saved
+                    db.session.flush()
+                    
+                    # Refresh the model to get the updated is_active state
+                    db.session.refresh(model)
+                    current_app.logger.info(f"Theme activation completed successfully for ID {model.id}")
+                except Exception as e:
+                    current_app.logger.error(f"Database error during theme activation: {str(e)}")
+                    db.session.rollback()
+                    raise ValueError(f"Failed to activate theme: {str(e)}")
             
             return model
             

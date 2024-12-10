@@ -1,5 +1,6 @@
 from flask import current_app
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import text
 from extensions import db
 from models import Theme, ThemeColors
 
@@ -66,10 +67,21 @@ def initialize_default_themes():
             current_app.logger.info("Themes already exist, skipping initialization")
             # Ensure at least one theme is active
             if not Theme.query.filter_by(is_active=True).first():
-                first_theme = Theme.query.first()
-                first_theme.is_active = True
-                db.session.commit()
-                current_app.logger.info(f"Activated theme: {first_theme.name}")
+                try:
+                    first_theme = Theme.query.first()
+                    current_app.logger.info(f"Setting first theme {first_theme.id} as active")
+                    # Use the same SQL pattern as admin views
+                    db.session.execute(text("UPDATE theme SET is_active = FALSE"))
+                    db.session.execute(
+                        text("UPDATE theme SET is_active = TRUE WHERE id = :theme_id"),
+                        {"theme_id": first_theme.id}
+                    )
+                    db.session.commit()
+                    current_app.logger.info(f"Successfully activated theme: {first_theme.name}")
+                except Exception as e:
+                    current_app.logger.error(f"Error activating initial theme: {str(e)}")
+                    db.session.rollback()
+                    raise
             return
 
         current_app.logger.info("Initializing default themes")
