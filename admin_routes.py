@@ -1,10 +1,10 @@
 import os
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_login import login_user, logout_user, login_required, current_user
-from extensions import db, csrf
-from models import User, Event, Category
 from werkzeug.utils import secure_filename
 from decimal import Decimal
+from extensions import db, csrf
+from models import User, Event, Category, Theme, ThemeColors
 
 admin_bp = Blueprint('admin_custom', __name__)
 
@@ -27,7 +27,6 @@ def dashboard():
         except (ValueError, TypeError):
             category_id = 'all'
     else:
-        # If 'all' is selected, sort by category name then sequence
         query = query.join(Category).order_by(Category.name, Event.sequence.nullslast(), Event.date.desc())
     
     events = query.all()
@@ -68,6 +67,113 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
+@admin_bp.route('/admin/themes')
+@login_required
+def list_themes():
+    if not current_user.is_admin:
+        flash('Access denied. Admin privileges required.')
+        return redirect(url_for('index'))
+    themes = Theme.query.all()
+    return render_template('admin/themes.html', themes=themes)
+
+@admin_bp.route('/admin/theme/new', methods=['GET', 'POST'])
+@login_required
+def new_theme():
+    if not current_user.is_admin:
+        flash('Access denied. Admin privileges required.')
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        try:
+            # Create new theme
+            theme = Theme(
+                name=request.form.get('name'),
+                slug=request.form.get('name').lower().replace(' ', '-'),
+                is_custom=True,
+                is_active=request.form.get('is_active') == 'true'
+            )
+            
+            # Create theme colors
+            colors = ThemeColors(
+                theme=theme,
+                primary_color=request.form.get('primary_color', '#ffffff'),
+                secondary_color=request.form.get('secondary_color', '#333333'),
+                accent_color=request.form.get('accent_color', '#007bff')
+            )
+            
+            db.session.add(theme)
+            db.session.commit()
+            flash('Theme created successfully')
+            return redirect(url_for('admin_custom.list_themes'))
+        except Exception as e:
+            current_app.logger.error(f"Error creating theme: {str(e)}")
+            flash('Error creating theme', 'danger')
+            
+    return render_template('admin/theme_form.html')
+
+@admin_bp.route('/admin/theme/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_theme(id):
+    if not current_user.is_admin:
+        flash('Access denied. Admin privileges required.')
+        return redirect(url_for('index'))
+
+    theme = Theme.query.get_or_404(id)
+    if request.method == 'POST':
+        try:
+            theme.name = request.form.get('name')
+            theme.slug = request.form.get('name').lower().replace(' ', '-')
+            theme.is_active = request.form.get('is_active') == 'true'
+            
+            if theme.colors:
+                theme.colors.primary_color = request.form.get('primary_color', '#ffffff')
+                theme.colors.secondary_color = request.form.get('secondary_color', '#333333')
+                theme.colors.accent_color = request.form.get('accent_color', '#007bff')
+            else:
+                colors = ThemeColors(
+                    theme=theme,
+                    primary_color=request.form.get('primary_color', '#ffffff'),
+                    secondary_color=request.form.get('secondary_color', '#333333'),
+                    accent_color=request.form.get('accent_color', '#007bff')
+                )
+                db.session.add(colors)
+            
+            # If this theme is being activated, deactivate all others
+            if theme.is_active:
+                Theme.query.filter(Theme.id != theme.id).update({'is_active': False})
+            
+            db.session.commit()
+            flash('Theme updated successfully')
+            return redirect(url_for('admin_custom.list_themes'))
+        except Exception as e:
+            current_app.logger.error(f"Error updating theme: {str(e)}")
+            flash('Error updating theme', 'danger')
+            
+    return render_template('admin/theme_form.html', theme=theme)
+
+@admin_bp.route('/admin/theme/<int:id>/delete', methods=['POST'])
+@login_required
+def delete_theme(id):
+    if not current_user.is_admin:
+        flash('Access denied. Admin privileges required.')
+        return redirect(url_for('index'))
+
+    theme = Theme.query.get_or_404(id)
+    if not theme.is_custom:
+        flash('Cannot delete default theme')
+        return redirect(url_for('admin_custom.list_themes'))
+        
+    try:
+        db.session.delete(theme)
+        db.session.commit()
+        flash('Theme deleted successfully')
+    except Exception as e:
+        current_app.logger.error(f"Error deleting theme: {str(e)}")
+        flash('Error deleting theme', 'danger')
+        
+    return redirect(url_for('admin_custom.list_themes'))
+
+# Event management routes
 @admin_bp.route('/admin/event/<int:id>/delete-file/<file_type>', methods=['POST'])
 @login_required
 def delete_file(id, file_type):
@@ -76,7 +182,6 @@ def delete_file(id, file_type):
         return redirect(url_for('index'))
 
     event = Event.query.get_or_404(id)
-
     try:
         if file_type == 'image':
             if event.image_path:

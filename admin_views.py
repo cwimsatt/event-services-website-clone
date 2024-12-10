@@ -4,7 +4,7 @@ from flask_admin.contrib.sqla import ModelView
 from flask_login import current_user
 from flask_ckeditor import CKEditorField
 from extensions import db
-from models import User, Category, Event, Testimonial, Contact, Theme, ThemeColors
+from models import User, Category, Event, Testimonial, Contact, Theme, ThemeColors, Theme, ThemeColors
 
 def init_admin(app):
     """Initialize Flask-Admin with secure views."""

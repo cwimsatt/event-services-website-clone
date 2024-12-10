@@ -26,9 +26,15 @@ def create_app():
     migrate.init_app(app, db)
     ckeditor.init_app(app)
     
-    # Register theme context processor
-    from utils.theme_manager import inject_theme
-    app.context_processor(inject_theme)
+    # Register theme context processor after database initialization
+    with app.app_context():
+        try:
+            from utils.theme_manager import inject_theme, initialize_default_themes
+            app.context_processor(inject_theme)
+            initialize_default_themes()  # Initialize themes right after context processor
+            app.logger.info("Theme system initialized successfully")
+        except Exception as e:
+            app.logger.error(f"Error initializing theme system: {str(e)}")
     
     return app
 
@@ -82,6 +88,17 @@ def setup_upload_directories():
 def register_extensions(app):
     """Register Flask extensions and blueprints."""
     try:
+        # Create database tables first
+        with app.app_context():
+            import models  # This import creates the models
+            db.create_all()
+            logger.info("Database tables created successfully")
+            
+            # Initialize default themes
+            from utils.theme_manager import initialize_default_themes
+            initialize_default_themes()
+            logger.info("Theme initialization completed")
+        
         # Import views and routes here to avoid circular imports
         from admin_routes import admin_bp
         
@@ -95,15 +112,30 @@ def register_extensions(app):
         # Import routes last to avoid circular dependencies
         import routes
         
+        logger.info("All extensions and blueprints registered successfully")
         return app
     except Exception as e:
         app.logger.error(f"Error registering extensions: {str(e)}")
         raise
 
 with app.app_context():
-    import models  # This import creates the models
-    db.create_all()
-    setup_upload_directories()
-    register_extensions(app)
-    
-    logger.info("Database initialization complete")
+    try:
+        import models  # This import creates the models
+        db.create_all()
+        logger.info("Database tables created successfully")
+        
+        setup_upload_directories()
+        logger.info("Upload directories configured")
+        
+        register_extensions(app)
+        logger.info("Extensions registered")
+        
+        # Initialize default themes
+        from utils.theme_manager import initialize_default_themes
+        initialize_default_themes()
+        logger.info("Theme initialization completed")
+        
+        logger.info("Application initialization complete")
+    except Exception as e:
+        logger.error(f"Error during application initialization: {str(e)}")
+        raise

@@ -16,6 +16,37 @@
     <link href="{{ url_for('static', filename='css/gallery.css') }}" rel="stylesheet">
     
     {% block extra_css %}{% endblock %}
+    
+    <style>
+        :root {
+            --primary-color: {{ theme_colors.primary }};
+            --secondary-color: {{ theme_colors.secondary }};
+            --accent-color: {{ theme_colors.accent }};
+        }
+        
+        body {
+            background-color: var(--primary-color);
+            color: var(--secondary-color);
+        }
+        
+        .navbar {
+            background-color: var(--secondary-color);
+        }
+        
+        .navbar-brand, .nav-link {
+            color: var(--primary-color) !important;
+        }
+        
+        .btn-primary {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+    </style>
 </head>
 <body>
     <!-- Navigation -->
