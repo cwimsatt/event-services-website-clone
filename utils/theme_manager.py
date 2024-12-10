@@ -30,26 +30,27 @@ def get_theme_colors():
         active_theme = get_active_theme()
         
         if active_theme and active_theme.colors:
-            colors = {
+            current_app.logger.info(f"Active theme found: {active_theme.name}")
+            current_app.logger.debug(f"Theme colors - Primary: {active_theme.colors.primary_color}, Secondary: {active_theme.colors.secondary_color}, Accent: {active_theme.colors.accent_color}")
+            
+            return {
                 'primary': active_theme.colors.primary_color,
                 'secondary': active_theme.colors.secondary_color,
                 'accent': active_theme.colors.accent_color
             }
-            current_app.logger.debug(f"Retrieved fresh theme colors: {colors}")
-            return colors
             
         current_app.logger.warning("No active theme colors found, using defaults")
         return {
-            'primary': '#ffffff',
-            'secondary': '#333333',
-            'accent': '#007bff'
+            'primary': '#f8f5f2',
+            'secondary': '#2c3e50',
+            'accent': '#e67e22'
         }
     except Exception as e:
         current_app.logger.error(f"Error getting theme colors: {str(e)}")
         return {
-            'primary': '#ffffff',
-            'secondary': '#333333',
-            'accent': '#007bff'
+            'primary': '#f8f5f2',
+            'secondary': '#2c3e50',
+            'accent': '#e67e22'
         }
 
 def inject_theme():
