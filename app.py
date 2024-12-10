@@ -113,11 +113,17 @@ with app.app_context():
         # Create all database tables through migration
         logger.info("Running database migrations...")
         try:
+            logger.info("Attempting to connect to database...")
+            db.engine.connect()
+            logger.info("Database connection successful")
+            
+            logger.info("Starting database upgrade...")
             from flask_migrate import upgrade
             upgrade()
             logger.info("Database migrations completed successfully")
         except Exception as e:
-            logger.error(f"Error running database migrations: {str(e)}")
+            logger.error(f"Error during database initialization: {str(e)}")
+            logger.exception("Full traceback:")
             raise
         
         # Set up required directories
