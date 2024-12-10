@@ -117,74 +117,110 @@ class ThemeModelView(SecureModelView):
     def on_model_change(self, form, model, is_created):
         """Handle theme changes with proper validation and error handling."""
         try:
+            current_app.logger.info(f"Processing theme changes for theme ID {model.id if not is_created else 'new'}")
+            current_app.logger.info(f"Form data - is_active: {model.is_active}")
+            
             # Store original is_active state before processing
             should_activate = model.is_active
             
             # Process colors first
             for color_field in ['primary_color', 'secondary_color', 'accent_color']:
                 color_value = getattr(form, color_field).data
+                current_app.logger.debug(f"Processing {color_field}: {color_value}")
                 if color_value and not color_value.startswith('#'):
+                    current_app.logger.error(f"Invalid color format for {color_field}: {color_value}")
                     raise ValueError(f"Invalid color format for {color_field}. Must start with '#'")
             
-            if not model.colors:
-                colors = ThemeColors(
-                    theme=model,
-                    primary_color=form.primary_color.data or '#f8f5f2',
-                    secondary_color=form.secondary_color.data or '#2c3e50',
-                    accent_color=form.accent_color.data or '#e67e22'
-                )
-                db.session.add(colors)
-            else:
-                model.colors.primary_color = form.primary_color.data or model.colors.primary_color
-                model.colors.secondary_color = form.secondary_color.data or model.colors.secondary_color
-                model.colors.accent_color = form.accent_color.data or model.colors.accent_color
+            try:
+                if not model.colors:
+                    current_app.logger.info("Creating new theme colors")
+                    colors = ThemeColors(
+                        theme=model,
+                        primary_color=form.primary_color.data or '#f8f5f2',
+                        secondary_color=form.secondary_color.data or '#2c3e50',
+                        accent_color=form.accent_color.data or '#e67e22'
+                    )
+                    db.session.add(colors)
+                else:
+                    current_app.logger.info("Updating existing theme colors")
+                    model.colors.primary_color = form.primary_color.data or model.colors.primary_color
+                    model.colors.secondary_color = form.secondary_color.data or model.colors.secondary_color
+                    model.colors.accent_color = form.accent_color.data or model.colors.accent_color
 
-            # Save changes before handling activation
-            db.session.flush()
+                # Save color changes
+                db.session.flush()
+                current_app.logger.info("Theme colors saved successfully")
+                
+            except Exception as color_error:
+                current_app.logger.error(f"Error processing theme colors: {str(color_error)}")
+                raise ValueError(f"Failed to save theme colors: {str(color_error)}")
             
             # Handle theme activation separately using direct SQL for atomicity
             if should_activate:
+                current_app.logger.info(f"Processing theme activation request for theme ID {model.id}")
+                
                 try:
-                    current_app.logger.info(f"Starting theme activation for theme ID {model.id}")
+                    # Only proceed with activation if we have a valid ID
+                    if not model.id:
+                        current_app.logger.error("Cannot activate theme: No ID available")
+                        raise ValueError("Cannot activate theme without a valid ID")
+
+                    # Begin a transaction for theme activation
+                    current_app.logger.info("Starting theme activation transaction")
                     
-                    # First verify the theme exists
-                    verify_theme_stmt = text("SELECT id FROM theme WHERE id = :theme_id")
-                    theme_exists = db.session.execute(verify_theme_stmt, {"theme_id": model.id}).scalar()
-                    
-                    if not theme_exists:
-                        current_app.logger.error(f"Theme with ID {model.id} not found")
-                        raise ValueError(f"Theme with ID {model.id} does not exist")
-                    
-                    # Deactivate all themes first
-                    current_app.logger.info("Deactivating all themes")
-                    deactivate_stmt = text("UPDATE theme SET is_active = FALSE")
-                    db.session.execute(deactivate_stmt)
-                    
-                    # Then activate the selected theme
-                    current_app.logger.info(f"Activating theme {model.id}")
-                    activate_stmt = text("UPDATE theme SET is_active = TRUE WHERE id = :theme_id")
-                    db.session.execute(activate_stmt, {"theme_id": model.id})
-                    
-                    # Commit the changes
-                    db.session.commit()
-                    current_app.logger.info(f"Theme activation completed for ID {model.id}")
-                    
-                    # Verify the changes
-                    verify_stmt = text("SELECT COUNT(*) FROM theme WHERE is_active = TRUE")
-                    active_count = db.session.execute(verify_stmt).scalar()
-                    current_app.logger.info(f"Active themes after update: {active_count}")
-                    
-                    if active_count != 1:
-                        current_app.logger.error(f"Inconsistent theme state: {active_count} active themes")
-                        raise ValueError(f"Theme activation failed: {active_count} active themes found")
-                    
-                    # Refresh the model to get the updated state
+                    try:
+                        # First verify the theme exists
+                        verify_stmt = text("""
+                            SELECT EXISTS(
+                                SELECT 1 FROM theme WHERE id = :theme_id
+                            )
+                        """)
+                        exists = db.session.execute(verify_stmt, {"theme_id": model.id}).scalar()
+                        
+                        if not exists:
+                            current_app.logger.error(f"Theme {model.id} does not exist in database")
+                            raise ValueError(f"Theme {model.id} not found")
+
+                        # Deactivate all themes atomically
+                        current_app.logger.info("Deactivating all themes")
+                        db.session.execute(text("UPDATE theme SET is_active = FALSE"))
+                        
+                        # Activate the selected theme
+                        current_app.logger.info(f"Activating theme {model.id}")
+                        result = db.session.execute(
+                            text("UPDATE theme SET is_active = TRUE WHERE id = :id"),
+                            {"id": model.id}
+                        )
+                        
+                        if result.rowcount != 1:
+                            current_app.logger.error(f"Theme activation failed: Updated {result.rowcount} rows")
+                            raise ValueError("Failed to activate theme")
+                        
+                        # Verify the final state
+                        active_count = db.session.execute(
+                            text("SELECT COUNT(*) FROM theme WHERE is_active = TRUE")
+                        ).scalar()
+                        
+                        if active_count != 1:
+                            current_app.logger.error(f"Invalid theme state: {active_count} active themes")
+                            raise ValueError(f"Theme activation resulted in {active_count} active themes")
+                        
+                        # If we got here, everything worked
+                        current_app.logger.info(f"Theme {model.id} activated successfully")
+                        db.session.commit()
+                        
+                    except Exception as e:
+                        current_app.logger.error(f"Error during theme activation SQL operations: {str(e)}")
+                        db.session.rollback()
+                        raise
+                        
+                    # Refresh the model to reflect the new state
                     db.session.refresh(model)
                     
                 except Exception as e:
-                    current_app.logger.error(f"Error during theme activation: {str(e)}")
-                    db.session.rollback()
-                    raise ValueError(f"Failed to activate theme: {str(e)}")
+                    error_msg = f"Theme activation failed: {str(e)}"
+                    current_app.logger.error(error_msg)
+                    raise ValueError(error_msg)
             
             return model
             
