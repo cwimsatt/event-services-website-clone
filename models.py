@@ -22,6 +22,7 @@ class Category(db.Model):
     name = db.Column(db.String(50), unique=True, nullable=False)
     slug = db.Column(db.String(50), unique=True, nullable=False)
     description = db.Column(db.Text)
+    sequence = db.Column(db.Float(precision=3), nullable=True)
     events = db.relationship('Event', backref='category', lazy=True)
 
     def __repr__(self):

@@ -19,10 +19,17 @@
             {% endfor %}
         </div>
 
-        <!-- Gallery Grid -->
-        <div class="gallery-grid">
-            {% for event in events %}
-            <div class="gallery-item" data-category="{{ event.category.name }}">
+        <!-- Categorized Gallery Grid -->
+        {% set ns = namespace(current_category=None) %}
+        {% for event in events %}
+            {% if ns.current_category != event.category.id %}
+                {% if not loop.first %}</div>{% endif %}
+                <h3 class="category-title mt-4 mb-3">{{ event.category.name }}</h3>
+                <div class="gallery-grid" data-category="{{ event.category.name }}">
+                {% set ns.current_category = event.category.id %}
+            {% endif %}
+            
+            <div class="gallery-item" data-sequence="{{ event.sequence or 0 }}">
                 {% set image_path = event.image_url %}
                 
                 {% if event.video_path %}
@@ -55,7 +62,8 @@
                     <span class="event-date">{{ event.date.strftime('%B %Y') }}</span>
                 </div>
             </div>
-            {% endfor %}
+            {% if loop.last %}</div>{% endif %}
+        {% endfor %}
         </div>
     </div>
 </div>

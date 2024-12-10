@@ -20,11 +20,14 @@ def portfolio():
     categories = Category.query.all()
     category_id = request.args.get('category_id', 'all')
     
-    # Get events based on category and sort by sequence
+    # Get events based on category and sort by both category and event sequence
     if category_id != 'all':
-        events = Event.query.filter_by(category_id=category_id).order_by(Event.sequence.nullslast(), Event.date.desc()).all()
+        events = Event.query.filter_by(category_id=category_id)\
+            .join(Category)\
+            .order_by(Category.sequence.nullslast(), Event.sequence.nullslast(), Event.date.desc()).all()
     else:
-        events = Event.query.order_by(Event.category_id, Event.sequence.nullslast(), Event.date.desc()).all()
+        events = Event.query.join(Category)\
+            .order_by(Category.sequence.nullslast(), Event.sequence.nullslast(), Event.date.desc()).all()
     
     # Debug log for each event's image path
     for event in events:
