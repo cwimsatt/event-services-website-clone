@@ -13,7 +13,7 @@
             </a>
             {% for category in categories %}
             <a href="{{ url_for('portfolio', category_id=category.id) }}" 
-               class="btn btn-outline-primary me-2 {% if active_category != 'all' and active_category|int == category.id %}active{% endif %}">
+               class="btn btn-outline-primary me-2 {% if category_id != 'all' and category_id == category.id|string %}active{% endif %}">
                 {{ category.name }}
             </a>
             {% endfor %}
