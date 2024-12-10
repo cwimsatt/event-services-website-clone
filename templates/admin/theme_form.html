@@ -17,20 +17,35 @@
 
                 <div class="mb-3">
                     <label for="primary_color" class="form-label">Primary Color</label>
-                    <input type="color" class="form-control color-picker" id="primary_color" name="primary_color" 
-                           value="{{ theme.colors.primary_color if theme and theme.colors else '#ffffff' }}">
+                    <div class="input-group">
+                        <input type="color" class="form-control color-picker" id="primary_color" name="primary_color" 
+                               value="{{ theme.colors.primary_color if theme and theme.colors else '#ffffff' }}">
+                        <input type="text" class="form-control color-text" data-color-input="primary_color"
+                               value="{{ theme.colors.primary_color if theme and theme.colors else '#ffffff' }}">
+                        <button class="btn btn-outline-secondary apply-color" type="button" data-color-target="primary_color">Apply</button>
+                    </div>
                 </div>
 
                 <div class="mb-3">
                     <label for="secondary_color" class="form-label">Secondary Color</label>
-                    <input type="color" class="form-control color-picker" id="secondary_color" name="secondary_color"
-                           value="{{ theme.colors.secondary_color if theme and theme.colors else '#333333' }}">
+                    <div class="input-group">
+                        <input type="color" class="form-control color-picker" id="secondary_color" name="secondary_color"
+                               value="{{ theme.colors.secondary_color if theme and theme.colors else '#333333' }}">
+                        <input type="text" class="form-control color-text" data-color-input="secondary_color"
+                               value="{{ theme.colors.secondary_color if theme and theme.colors else '#333333' }}">
+                        <button class="btn btn-outline-secondary apply-color" type="button" data-color-target="secondary_color">Apply</button>
+                    </div>
                 </div>
 
                 <div class="mb-3">
                     <label for="accent_color" class="form-label">Accent Color</label>
-                    <input type="color" class="form-control color-picker" id="accent_color" name="accent_color"
-                           value="{{ theme.colors.accent_color if theme and theme.colors else '#007bff' }}">
+                    <div class="input-group">
+                        <input type="color" class="form-control color-picker" id="accent_color" name="accent_color"
+                               value="{{ theme.colors.accent_color if theme and theme.colors else '#007bff' }}">
+                        <input type="text" class="form-control color-text" data-color-input="accent_color"
+                               value="{{ theme.colors.accent_color if theme and theme.colors else '#007bff' }}">
+                        <button class="btn btn-outline-secondary apply-color" type="button" data-color-target="accent_color">Apply</button>
+                    </div>
                 </div>
 
                 <div class="mb-3">
@@ -99,22 +114,77 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const colorInputs = document.querySelectorAll('.color-picker');
+        const colorTextInputs = document.querySelectorAll('.color-text');
+        const applyButtons = document.querySelectorAll('.apply-color');
         const previewElements = {
             'primary_color': document.getElementById('primary-preview'),
             'secondary_color': document.getElementById('secondary-preview'),
             'accent_color': document.getElementById('accent-preview')
         };
 
+        // Function to validate hex color
+        function isValidHexColor(color) {
+            return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(color);
+        }
+
+        // Function to update preview
+        function updatePreview(colorId, value) {
+            const previewElement = previewElements[colorId];
+            if (previewElement) {
+                previewElement.style.backgroundColor = value;
+            }
+        }
+
+        // Handle color picker changes
         colorInputs.forEach(input => {
+            const textInput = document.querySelector(`[data-color-input="${input.id}"]`);
             const previewElement = previewElements[input.id];
+
+            // Initial preview
             if (previewElement) {
                 previewElement.style.backgroundColor = input.value;
             }
 
             input.addEventListener('input', function(e) {
-                if (previewElement) {
-                    previewElement.style.backgroundColor = e.target.value;
+                const newColor = e.target.value;
+                if (textInput) {
+                    textInput.value = newColor;
                 }
+                updatePreview(input.id, newColor);
+            });
+        });
+
+        // Handle text input changes
+        colorTextInputs.forEach(textInput => {
+            const colorId = textInput.dataset.colorInput;
+            const colorPicker = document.getElementById(colorId);
+
+            textInput.addEventListener('input', function(e) {
+                let value = e.target.value;
+                if (!value.startsWith('#')) {
+                    value = '#' + value;
+                }
+                if (isValidHexColor(value)) {
+                    if (colorPicker) {
+                        colorPicker.value = value;
+                    }
+                    updatePreview(colorId, value);
+                }
+            });
+        });
+
+        // Handle apply button clicks
+        applyButtons.forEach(button => {
+            const colorId = button.dataset.colorTarget;
+            const colorPicker = document.getElementById(colorId);
+            const textInput = document.querySelector(`[data-color-input="${colorId}"]`);
+
+            button.addEventListener('click', function() {
+                const value = colorPicker.value;
+                if (textInput) {
+                    textInput.value = value;
+                }
+                updatePreview(colorId, value);
             });
         });
     });
@@ -122,11 +192,21 @@
 
 <style>
     .color-picker {
-        width: 100px !important;
+        width: 80px !important;
         height: 40px !important;
         padding: 2px !important;
         border: 1px solid #ccc !important;
-        border-radius: 4px !important;
+        border-radius: 4px 0 0 4px !important;
+    }
+    .color-text {
+        width: 120px !important;
+        border-radius: 0 !important;
+    }
+    .apply-color {
+        border-radius: 0 4px 4px 0 !important;
+    }
+    .input-group {
+        width: auto !important;
     }
 </style>
 {% endblock %}

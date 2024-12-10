@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import current_app
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import text
@@ -22,29 +23,52 @@ def get_active_theme():
         return None
 
 def get_theme_colors():
-    """Get colors for the active theme."""
-    active_theme = get_active_theme()
-    if active_theme and active_theme.colors:
+    """Get colors for the active theme with real-time updates."""
+    try:
+        # Force a fresh database query to get the latest theme colors
+        db.session.expire_all()
+        active_theme = get_active_theme()
+        
+        if active_theme and active_theme.colors:
+            colors = {
+                'primary': active_theme.colors.primary_color,
+                'secondary': active_theme.colors.secondary_color,
+                'accent': active_theme.colors.accent_color
+            }
+            current_app.logger.debug(f"Retrieved fresh theme colors: {colors}")
+            return colors
+            
+        current_app.logger.warning("No active theme colors found, using defaults")
         return {
-            'primary': active_theme.colors.primary_color,
-            'secondary': active_theme.colors.secondary_color,
-            'accent': active_theme.colors.accent_color
+            'primary': '#ffffff',
+            'secondary': '#333333',
+            'accent': '#007bff'
         }
-    return {
-        'primary': '#ffffff',
-        'secondary': '#333333',
-        'accent': '#007bff'
-    }
+    except Exception as e:
+        current_app.logger.error(f"Error getting theme colors: {str(e)}")
+        return {
+            'primary': '#ffffff',
+            'secondary': '#333333',
+            'accent': '#007bff'
+        }
 
 def inject_theme():
-    """Context processor to inject theme data into templates."""
+    """Context processor to inject theme data into templates with real-time updates."""
     try:
+        # Clear any cached theme data
+        db.session.expire_all()
+        db.session.commit()
+        
         active_theme = get_active_theme()
         colors = get_theme_colors()
-        current_app.logger.debug(f"Injecting theme data: active_theme={active_theme}, colors={colors}")
+        
+        current_app.logger.info(f"Injecting fresh theme data: theme={active_theme.name if active_theme else 'None'}")
+        current_app.logger.debug(f"Theme colors: {colors}")
+        
         return dict(
             active_theme=active_theme,
-            theme_colors=colors
+            theme_colors=colors,
+            theme_updated_at=datetime.now().isoformat()  # Add timestamp for cache busting
         )
     except Exception as e:
         current_app.logger.error(f"Error injecting theme data: {str(e)}")
@@ -54,7 +78,8 @@ def inject_theme():
                 'primary': '#ffffff',
                 'secondary': '#333333',
                 'accent': '#007bff'
-            }
+            },
+            theme_updated_at=datetime.now().isoformat()
         )
 
 def initialize_default_themes():
