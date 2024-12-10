@@ -49,30 +49,41 @@ def inject_theme():
     try:
         # Clear any cached theme data
         db.session.expire_all()
-        db.session.commit()
         
+        # Get active theme and colors
         active_theme = get_active_theme()
-        colors = get_theme_colors()
+        if not active_theme:
+            current_app.logger.error("No active theme found in database")
+            raise ValueError("No active theme found")
+            
+        # Get theme colors
+        if not active_theme.colors:
+            current_app.logger.error(f"No colors found for active theme {active_theme.name}")
+            raise ValueError(f"No colors found for theme {active_theme.name}")
+            
+        # Log the actual color values
+        current_app.logger.info(f"""
+            Injecting theme colors for {active_theme.name}:
+            Primary: {active_theme.colors.primary_color}
+            Secondary: {active_theme.colors.secondary_color}
+            Accent: {active_theme.colors.accent_color}
+        """)
         
-        current_app.logger.info(f"Injecting fresh theme data: theme={active_theme.name if active_theme else 'None'}")
-        current_app.logger.debug(f"Theme colors: {colors}")
+        colors = {
+            'primary': active_theme.colors.primary_color,
+            'secondary': active_theme.colors.secondary_color,
+            'accent': active_theme.colors.accent_color
+        }
         
-        return dict(
-            active_theme=active_theme,
-            theme_colors=colors,
-            theme_updated_at=datetime.now().isoformat()  # Add timestamp for cache busting
-        )
+        return {
+            'active_theme': active_theme,
+            'theme_colors': colors,
+            'theme_updated_at': datetime.now().isoformat()
+        }
+        
     except Exception as e:
-        current_app.logger.error(f"Error injecting theme data: {str(e)}")
-        return dict(
-            active_theme=None,
-            theme_colors={
-                'primary': '#ffffff',
-                'secondary': '#333333',
-                'accent': '#007bff'
-            },
-            theme_updated_at=datetime.now().isoformat()
-        )
+        current_app.logger.error(f"Critical error in theme injection: {str(e)}")
+        raise  # Let the error propagate so we can see it in the logs
 
 def initialize_default_themes():
     """Initialize default themes if none exist."""
