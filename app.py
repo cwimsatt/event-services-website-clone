@@ -26,15 +26,9 @@ def create_app():
     migrate.init_app(app, db)
     ckeditor.init_app(app)
     
-    # Register theme context processor after database initialization
-    with app.app_context():
-        try:
-            from utils.theme_manager import inject_theme, initialize_default_themes
-            app.context_processor(inject_theme)
-            initialize_default_themes()  # Initialize themes right after context processor
-            app.logger.info("Theme system initialized successfully")
-        except Exception as e:
-            app.logger.error(f"Error initializing theme system: {str(e)}")
+    # Register theme context processor
+    from utils.theme_manager import inject_theme
+    app.context_processor(inject_theme)
     
     return app
 
@@ -88,17 +82,6 @@ def setup_upload_directories():
 def register_extensions(app):
     """Register Flask extensions and blueprints."""
     try:
-        # Create database tables first
-        with app.app_context():
-            import models  # This import creates the models
-            db.create_all()
-            logger.info("Database tables created successfully")
-            
-            # Initialize default themes
-            from utils.theme_manager import initialize_default_themes
-            initialize_default_themes()
-            logger.info("Theme initialization completed")
-        
         # Import views and routes here to avoid circular imports
         from admin_routes import admin_bp
         
@@ -120,20 +103,35 @@ def register_extensions(app):
 
 with app.app_context():
     try:
-        import models  # This import creates the models
-        db.create_all()
-        logger.info("Database tables created successfully")
+        # Import models first to ensure all models are defined
+        import models
         
-        setup_upload_directories()
-        logger.info("Upload directories configured")
-        
+        # Register extensions and blueprints
         register_extensions(app)
         logger.info("Extensions registered")
         
-        # Initialize default themes
-        from utils.theme_manager import initialize_default_themes
-        initialize_default_themes()
-        logger.info("Theme initialization completed")
+        # Create all database tables through migration
+        logger.info("Running database migrations...")
+        try:
+            from flask_migrate import upgrade
+            upgrade()
+            logger.info("Database migrations completed successfully")
+        except Exception as e:
+            logger.error(f"Error running database migrations: {str(e)}")
+            raise
+        
+        # Set up required directories
+        setup_upload_directories()
+        logger.info("Upload directories configured")
+        
+        # Initialize theme system after database is ready
+        try:
+            from utils.theme_manager import initialize_default_themes
+            initialize_default_themes()
+            logger.info("Theme initialization completed")
+        except Exception as e:
+            logger.error(f"Error initializing themes: {str(e)}")
+            raise
         
         logger.info("Application initialization complete")
     except Exception as e:

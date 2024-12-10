@@ -16,4 +16,5 @@ dependencies = [
     "pillow>=11.0.0",
     "flask-admin>=1.6.1",
     "flask-wtf>=1.2.1",
+    "bleach>=6.2.0",
 ]
