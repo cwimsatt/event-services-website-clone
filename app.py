@@ -26,6 +26,10 @@ def create_app():
     migrate.init_app(app, db)
     ckeditor.init_app(app)
     
+    # Register theme context processor
+    from utils.theme_manager import inject_theme
+    app.context_processor(inject_theme)
+    
     return app
 
 app = create_app()
@@ -76,18 +80,25 @@ def setup_upload_directories():
         os.makedirs(placeholder_path, mode=0o755)
 
 def register_extensions(app):
-    # Import views and routes here to avoid circular imports
-    from admin_routes import admin_bp
-    import admin_views
-    import routes  # This import must be after admin_views
-    
-    # Register blueprints
-    app.register_blueprint(admin_bp)
-    
-    # Initialize admin interface
-    admin_views.init_admin(app)
-    
-    return app
+    """Register Flask extensions and blueprints."""
+    try:
+        # Import views and routes here to avoid circular imports
+        from admin_routes import admin_bp
+        
+        # Register admin blueprint first
+        app.register_blueprint(admin_bp)
+        
+        # Import and initialize admin views after blueprint registration
+        import admin_views
+        admin = admin_views.init_admin(app)
+        
+        # Import routes last to avoid circular dependencies
+        import routes
+        
+        return app
+    except Exception as e:
+        app.logger.error(f"Error registering extensions: {str(e)}")
+        raise
 
 with app.app_context():
     import models  # This import creates the models

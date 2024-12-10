@@ -7,8 +7,23 @@
             // Initialize color pickers for inline form
             var colorInputs = document.querySelectorAll('input[type="text"][name*="color"]');
             colorInputs.forEach(function(input) {
-                input.type = 'color';
+                if (input.value.match(/^#[0-9A-Fa-f]{6}$/)) {
+                    input.type = 'color';
+                }
             });
         });
     </script>
+{% endblock %}
+
+{% block edit_form %}
+    {{ super() }}
+    <style>
+        input[type="color"] {
+            width: 100px;
+            height: 40px;
+            padding: 2px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+    </style>
 {% endblock %}

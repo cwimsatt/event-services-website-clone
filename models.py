@@ -104,7 +104,13 @@ class Theme(db.Model):
     slug = db.Column(db.String(50), unique=True, nullable=False)
     is_custom = db.Column(db.Boolean, default=False)
     is_active = db.Column(db.Boolean, default=False)
-    colors = db.relationship('ThemeColors', backref='theme', uselist=False, cascade='all, delete-orphan')
+    colors = db.relationship('ThemeColors', back_populates='theme', uselist=False, 
+                           cascade='all, delete-orphan', lazy='joined')
+
+    def __init__(self, **kwargs):
+        super(Theme, self).__init__(**kwargs)
+        if not self.colors:
+            self.colors = ThemeColors()
 
     def __repr__(self):
         return f'<Theme {self.name}>'
@@ -112,9 +118,10 @@ class Theme(db.Model):
 class ThemeColors(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     theme_id = db.Column(db.Integer, db.ForeignKey('theme.id'), nullable=False)
-    primary_color = db.Column(db.String(7), nullable=False)  # Hex color code (#RRGGBB)
-    secondary_color = db.Column(db.String(7), nullable=False)
-    accent_color = db.Column(db.String(7), nullable=False)
+    primary_color = db.Column(db.String(7), default='#000000', nullable=False)  # Hex color code (#RRGGBB)
+    secondary_color = db.Column(db.String(7), default='#FFFFFF', nullable=False)
+    accent_color = db.Column(db.String(7), default='#808080', nullable=False)
+    theme = db.relationship('Theme', back_populates='colors')
 
     def __repr__(self):
-        return f'<ThemeColors for {self.theme.name}>'
+        return f'<ThemeColors for theme_id={self.theme_id}>'

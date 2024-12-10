@@ -7,16 +7,28 @@ from extensions import db
 from models import User, Category, Event, Testimonial, Contact, Theme, ThemeColors
 
 def init_admin(app):
-    admin = Admin(app, name='Event Services Admin', template_mode='bootstrap4', index_view=SecureAdminIndexView())
-    
-    # Add model views
-    admin.add_view(CategoryModelView(Category, db.session))
-    admin.add_view(EventModelView(Event, db.session))
-    admin.add_view(TestimonialModelView(Testimonial, db.session))
-    admin.add_view(ContactModelView(Contact, db.session))
-    admin.add_view(ThemeModelView(Theme, db.session))
-    
-    return admin
+    """Initialize Flask-Admin with secure views."""
+    try:
+        admin = Admin(
+            app,
+            name='Event Services Admin',
+            template_mode='bootstrap4',
+            index_view=SecureAdminIndexView()
+        )
+        
+        # Add model views with proper session management
+        with app.app_context():
+            admin.add_view(CategoryModelView(Category, db.session))
+            admin.add_view(EventModelView(Event, db.session))
+            admin.add_view(TestimonialModelView(Testimonial, db.session))
+            admin.add_view(ContactModelView(Contact, db.session))
+            admin.add_view(ThemeModelView(Theme, db.session))
+        
+        app.logger.info("Flask-Admin initialized successfully")
+        return admin
+    except Exception as e:
+        app.logger.error(f"Error initializing admin: {str(e)}")
+        raise
 
 class SecureModelView(ModelView):
     def is_accessible(self):
@@ -63,10 +75,11 @@ class ContactModelView(SecureModelView):
 class ThemeModelView(SecureModelView):
     column_list = ('name', 'slug', 'is_custom', 'is_active')
     column_searchable_list = ['name']
-    inline_models = [(ThemeColors, {
-        'form_columns': ['primary_color', 'secondary_color', 'accent_color']
-    })]
-    form_excluded_columns = ['colors']
+    form_columns = ('name', 'slug', 'is_custom', 'is_active', 'colors')
+    form_excluded_columns = None
+    inline_models = [(ThemeColors, dict(
+        form_columns=['primary_color', 'secondary_color', 'accent_color']
+    ))]
     create_template = 'admin/theme_form.html'
     edit_template = 'admin/theme_form.html'
 
@@ -75,5 +88,15 @@ class ThemeModelView(SecureModelView):
         if model.is_active:
             Theme.query.filter(Theme.id != model.id).update({'is_active': False})
             db.session.commit()
+        
+        # Create default colors if none exist
+        if not model.colors:
+            colors = ThemeColors(
+                theme=model,
+                primary_color='#000000',
+                secondary_color='#FFFFFF',
+                accent_color='#808080'
+            )
+            db.session.add(colors)
 
 # Admin initialization is now handled in app.py's register_extensions function
