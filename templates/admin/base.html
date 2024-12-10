@@ -8,8 +8,17 @@
     {% endif %}
 {% endblock %}
 
+{% block head %}
+    {{ super() }}
+    <link href="{{ url_for('static', filename='css/admin.css') }}" rel="stylesheet">
+{% endblock %}
+
 {% block content %}
 <div class="container mt-5 pt-5">
+    {% block brand %}
+        <a class="navbar-brand" href="{{ url_for('admin.index') }}">{{ admin_view.admin.name }}</a>
+    {% endblock %}
+
     {% block messages %}
         {{ super() }}
     {% endblock %}
@@ -17,6 +26,11 @@
     {% block admin_content %}
         {% block body %}{% endblock %}
         {% block admin_form %}{% endblock %}
+    {% endblock %}
+
+    {% block tail_js %}
+        {{ super() }}
+        <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
     {% endblock %}
 </div>
 {% endblock %}

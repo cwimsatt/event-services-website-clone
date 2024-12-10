@@ -1,8 +1,9 @@
-from flask import redirect, url_for
+from flask import redirect, url_for, current_app
 from flask_admin import Admin, AdminIndexView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_login import current_user
 from flask_ckeditor import CKEditorField
+from wtforms import StringField
 from extensions import db
 from models import User, Category, Event, Testimonial, Contact, Theme, ThemeColors
 
@@ -87,6 +88,21 @@ class ThemeModelView(SecureModelView):
     can_delete = True
     edit_modal = False
     create_modal = False
+
+    def scaffold_form(self):
+        form_class = super().scaffold_form()
+        form_class.primary_color = StringField('Primary Color')
+        form_class.secondary_color = StringField('Secondary Color')
+        form_class.accent_color = StringField('Accent Color')
+        return form_class
+    
+    def on_form_prefill(self, form, id):
+        """Pre-fill the form with existing theme colors"""
+        theme = self.get_one(id)
+        if theme and theme.colors:
+            form.primary_color.data = theme.colors.primary_color
+            form.secondary_color.data = theme.colors.secondary_color
+            form.accent_color.data = theme.colors.accent_color
     
     def create_form(self):
         form = super().create_form()
@@ -98,21 +114,40 @@ class ThemeModelView(SecureModelView):
         return form
     
     def on_model_change(self, form, model, is_created):
-        # Handle theme activation
-        if model.is_active:
-            Theme.query.filter(Theme.id != model.id).update({'is_active': False})
-            db.session.commit()
-        
-        # Ensure theme has colors
-        if not model.colors:
-            colors = ThemeColors(
-                theme=model,
-                primary_color='#f8f5f2',
-                secondary_color='#2c3e50',
-                accent_color='#e67e22'
-            )
-            db.session.add(colors)
-        
-        return model
+        try:
+            # Validate theme activation
+            if model.is_active:
+                # Count active themes excluding current one
+                active_themes = Theme.query.filter(
+                    Theme.id != model.id,
+                    Theme.is_active == True
+                ).count()
+                
+                # Deactivate other themes atomically
+                Theme.query.filter(Theme.id != model.id).update({'is_active': False})
+            else:
+                # Prevent deactivation if this is the last active theme
+                active_themes = Theme.query.filter(Theme.is_active == True).count()
+                if active_themes <= 1 and not is_created:
+                    raise ValueError("Cannot deactivate the last active theme")
+            
+            # Ensure theme has colors with validation
+            if not model.colors:
+                colors = ThemeColors(
+                    theme=model,
+                    primary_color=form.primary_color.data or '#f8f5f2',
+                    secondary_color=form.secondary_color.data or '#2c3e50',
+                    accent_color=form.accent_color.data or '#e67e22'
+                )
+                db.session.add(colors)
+            
+            return model
+            
+        except ValueError as e:
+            current_app.logger.error(f"Theme activation error: {str(e)}")
+            raise ValueError(str(e))
+        except Exception as e:
+            current_app.logger.error(f"Unexpected error in theme activation: {str(e)}")
+            raise
 
 # Admin initialization is now handled in app.py's register_extensions function
