@@ -30,28 +30,19 @@ def get_theme_colors():
         active_theme = get_active_theme()
         
         if active_theme and active_theme.colors:
-            current_app.logger.info(f"Active theme found: {active_theme.name}")
-            current_app.logger.debug(f"Theme colors - Primary: {active_theme.colors.primary_color}, Secondary: {active_theme.colors.secondary_color}, Accent: {active_theme.colors.accent_color}")
-            
-            return {
+            theme_colors = {
                 'primary': active_theme.colors.primary_color,
                 'secondary': active_theme.colors.secondary_color,
                 'accent': active_theme.colors.accent_color
             }
+            current_app.logger.info(f"Retrieved theme colors for {active_theme.name}: {theme_colors}")
+            return theme_colors
             
-        current_app.logger.warning("No active theme colors found, using defaults")
-        return {
-            'primary': '#f8f5f2',
-            'secondary': '#2c3e50',
-            'accent': '#e67e22'
-        }
+        current_app.logger.warning("No active theme found, check database")
+        raise ValueError("No active theme found")
     except Exception as e:
         current_app.logger.error(f"Error getting theme colors: {str(e)}")
-        return {
-            'primary': '#f8f5f2',
-            'secondary': '#2c3e50',
-            'accent': '#e67e22'
-        }
+        raise
 
 def inject_theme():
     """Context processor to inject theme data into templates with real-time updates."""
