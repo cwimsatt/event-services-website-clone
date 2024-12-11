@@ -2,13 +2,15 @@ import os
 from flask import render_template, request, flash, redirect, url_for, current_app
 from extensions import db
 from app import app
-from models import Event, Testimonial, Contact, Category
+from models import Event, Testimonial, Contact, Category, Theme, ThemeColors 
+from utils.theme_manager import get_theme_colors
 
 @app.route('/')
 def index():
     featured_events = Event.query.limit(6).all()
     testimonials = Testimonial.query.limit(3).all()
-    return render_template('index.html', events=featured_events, testimonials=testimonials)
+    
+    return render_template('index.html', events=featured_events, testimonials=testimonials,theme_colors = get_theme_colors())
 
 def ensure_image_exists(image_path):
     if image_path:
@@ -54,14 +56,16 @@ def portfolio():
             current_app.logger.info(f"File exists: {os.path.exists(full_path)}")
         current_app.logger.info("---")
     
-    return render_template('portfolio.html', 
-                         events=events, 
-                         categories=categories, 
-                         active_category=category_id)
+    theme_colors = get_theme_colors()
+    return render_template('portfolio.html',
+                         events=events,
+                         categories=categories,
+                         active_category=category_id,
+                         theme_colors=theme_colors)
 
 @app.route('/about')
 def about():
-    return render_template('about.html')
+    return render_template('about.html',theme_colors = get_theme_colors())
 
 @app.route('/services')
 def services():
