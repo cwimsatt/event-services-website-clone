@@ -65,7 +65,8 @@ def portfolio():
 
 @app.route('/about')
 def about():
-    return render_template('about.html',theme_colors = get_theme_colors())
+    theme_colors = get_theme_colors()
+    return render_template('about.html', theme_colors=theme_colors)
 
 @app.route('/services')
 def services():
