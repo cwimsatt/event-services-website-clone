@@ -70,7 +70,8 @@ def about():
 
 @app.route('/services')
 def services():
-    return render_template('services.html')
+    theme_colors = get_theme_colors()
+    return render_template('services.html', theme_colors=theme_colors)
 
 @app.route('/contact', methods=['GET', 'POST'])
 def contact():
@@ -84,4 +85,5 @@ def contact():
         db.session.commit()
         flash('Thank you for your message! We will get back to you soon.')
         return redirect(url_for('contact'))
-    return render_template('contact.html')
+    theme_colors=get_theme_colors()
+    return render_template('contact.html',theme_colors=theme_colors)
