@@ -1,11 +1,19 @@
 
+import os
 from sqlalchemy_diff import compare
 from sqlalchemy import create_engine
-from models import Base  # Import your SQLAlchemy models (ensure they use Base.metadata)
+from models import Base
+from extensions import db
 
 # Connect to the database
-engine = create_engine('postgresql://user:password@localhost/dbname')
+dburl = os.getenv('DATABASE_URL')
+engine = create_engine(dburl)
 
 # Compare the models' metadata with the database schema
 diff = compare(Base.metadata, engine)
-print(diff)
+
+if diff:
+    print("Schema differences found:")
+    print(diff)
+else:
+    print("No schema differences found")
