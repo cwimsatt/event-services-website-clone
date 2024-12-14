@@ -1,9 +1,6 @@
-from extensions import db, Base
+from extensions import db
 from datetime import datetime
 from flask_login import UserMixin
-
-# Create Base metadata registry
-metadata = Base.metadata
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask import url_for, current_app
 
