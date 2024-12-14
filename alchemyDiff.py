@@ -1,10 +1,13 @@
-
-from sqlalchemy_diff import compare
+from os import getenv
+from sqlalchemydiff import compare
 from sqlalchemy import create_engine
-from models import Base  # Import your SQLAlchemy models (ensure they use Base.metadata)
+from models import metadata
+import os
+from sqlalchemy import create_engine
 
 # Connect to the database
-engine = create_engine('postgresql://user:password@localhost/dbname')
+dburl = os.getenv('DATABASE_URL')
+engine = create_engine(dburl)
 
 # Compare the models' metadata with the database schema
 diff = compare(Base.metadata, engine)
