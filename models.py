@@ -1,4 +1,6 @@
+from sqlalchemy import MetaData
 from extensions import db
+
 from datetime import datetime
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -133,3 +135,5 @@ class ThemeColors(db.Model):
 
     def __repr__(self):
         return f'<ThemeColors for theme_id={self.theme_id}>'
+
+ORMmetadata = db.metadata
