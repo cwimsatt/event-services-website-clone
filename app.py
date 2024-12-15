@@ -158,10 +158,7 @@ with app.app_context():
             db.engine.connect()
             logger.info("Database connection successful")
             
-            logger.info("Starting database upgrade...")
-            from flask_migrate import upgrade
-            upgrade()
-            logger.info("Database migrations completed successfully")
+            logger.info("Database setup complete")
         except Exception as e:
             logger.error(f"Error during database initialization: {str(e)}")
             logger.exception("Full traceback:")
