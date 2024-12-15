@@ -22,7 +22,7 @@ if __name__ == "__main__":
         
         # Start the application
         logger.info("Starting Flask application server...")
-        app.run(host="0.0.0.0", port=3000, debug=True)
+        app.run(host="0.0.0.0", port=5000, debug=True)
     except Exception as e:
         logger.error(f"Failed to start server: {str(e)}")
         logger.exception("Full traceback:")
