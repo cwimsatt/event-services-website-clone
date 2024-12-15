@@ -1,5 +1,4 @@
 from sqlalchemy import MetaData
-from sqlalchemy.orm import declarative_base
 from extensions import db
 
 from datetime import datetime
@@ -137,4 +136,4 @@ class ThemeColors(db.Model):
     def __repr__(self):
         return f'<ThemeColors for theme_id={self.theme_id}>'
 
-
+ORMmetadata = db.metadata
