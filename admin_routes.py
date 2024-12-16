@@ -102,14 +102,17 @@ def new_theme():
                 is_custom=True,
                 is_active=request.form.get('is_active') == 'true'
             )
+            db.session.add(theme)
+            db.session.flush()  # Get the theme ID
             
             # Create theme colors
             colors = ThemeColors(
-                theme=theme,
+                theme_id=theme.id,
                 primary_color=request.form.get('primary_color', '#ffffff'),
                 secondary_color=request.form.get('secondary_color', '#333333'),
                 accent_color=request.form.get('accent_color', '#007bff')
             )
+            db.session.add(colors)
             
             db.session.add(theme)
             db.session.commit()

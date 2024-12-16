@@ -111,8 +111,6 @@ class Theme(db.Model):
 
     def __init__(self, **kwargs):
         super(Theme, self).__init__(**kwargs)
-        if not self.colors:
-            self.colors = ThemeColors()
 
     def __repr__(self):
         return f'<Theme {self.name}>'
