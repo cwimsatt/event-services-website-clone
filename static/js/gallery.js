@@ -30,6 +30,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
 
                 masonryInstances.push(masonry);
+                if (masonry && typeof masonry.layout === 'function') {
+                    masonry.layout();
+                }
                 console.log(`Masonry initialized successfully for grid ${index + 1}`);
             } catch (error) {
                 console.error(`Gallery initialization error for grid ${index + 1}:`, error);
