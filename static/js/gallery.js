@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', function() {
     // Only initialize gallery on pages that have the gallery-grid
     const grid = document.querySelector('.gallery-grid');
@@ -30,9 +29,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     transitionDuration: '0.3s'
                 });
 
-                if (masonry) {
-                    masonryInstances.push(masonry);
-                }
+                masonryInstances.push(masonry);
                 console.log(`Masonry initialized successfully for grid ${index + 1}`);
             } catch (error) {
                 console.error(`Gallery initialization error for grid ${index + 1}:`, error);
@@ -47,8 +44,9 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Initialize filtering functionality
-    const initializeFilters = function() {
+    const initializeFilters = function(masonryInstances) {
         const filterButtons = document.querySelectorAll('.filter-btn');
+        
         if (!filterButtons.length) return;
 
         filterButtons.forEach(button => {
@@ -62,9 +60,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 filterButtons.forEach(btn => btn.classList.remove('active'));
                 this.classList.add('active');
 
-                // Reinitialize Masonry after filter
+                // Destroy existing Masonry instances
+                if (masonryInstances && masonryInstances.length) {
+                    masonryInstances.forEach(masonry => {
+                        if (masonry && masonry.destroy) {
+                            masonry.destroy();
+                        }
+                    });
+                }
+
+                // Wait for DOM updates
                 setTimeout(() => {
-                    initializeMasonry();
+                    // Reinitialize Masonry
+                    const newMasonryInstances = initializeMasonry();
+                    
+                    // Update layout after a short delay to ensure proper positioning
+                    setTimeout(() => {
+                        newMasonryInstances.forEach(masonry => {
+                            if (masonry && masonry.layout) {
+                                masonry.layout();
+                            }
+                        });
+                    }, 100);
                 }, 100);
             });
         });
@@ -72,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Initialize lazy loading
-    const initializeLazyLoading = function() {
+    const initializeLazyLoading = function(masonry) {
         const lazyImages = document.querySelectorAll('img.lazy');
         
         if (!lazyImages.length) return;
@@ -85,6 +102,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         img.src = img.dataset.src;
                         img.classList.remove('lazy');
                         observer.unobserve(img);
+                        
+                        // Update layout after image loads
+                        img.addEventListener('load', () => {
+                            if (masonry) {
+                                masonry.layout();
+                            }
+                        });
                     }
                 }
             });
@@ -99,17 +123,23 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Wait for images to load before initializing
+    const grids = document.querySelectorAll('.gallery-grid');
+    if (!grids.length) {
+        console.log('No gallery grids found - skipping initialization');
+        return;
+    }
+
     if (typeof imagesLoaded === 'function') {
         console.log('Using imagesLoaded for initialization');
-        imagesLoaded(grid, function() {
-            initializeMasonry();
-            initializeFilters();
-            initializeLazyLoading();
+        imagesLoaded(grids, function() {
+            const masonryInstances = initializeMasonry();
+            initializeFilters(masonryInstances);
+            initializeLazyLoading(masonryInstances);
         });
     } else {
         console.warn('imagesLoaded not available, falling back to direct initialization');
-        initializeMasonry();
-        initializeFilters();
-        initializeLazyLoading();
+        const masonryInstances = initializeMasonry();
+        initializeFilters(masonryInstances);
+        initializeLazyLoading(masonryInstances);
     }
 });
