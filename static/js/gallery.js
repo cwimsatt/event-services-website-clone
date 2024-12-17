@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const masonry = new Masonry(grid, {
                     itemSelector: '.gallery-item',
                     columnWidth: '.gallery-item',
-                    gutter: 20,
+                    gutter: 10,
                     fitWidth: true,
                     transitionDuration: '0.3s'
                 });
@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Initialize lazy loading
-    const initializeLazyLoading = function(masonry) {
+    const initializeLazyLoading = function(masonryInstances) {
         const lazyImages = document.querySelectorAll('img.lazy');
         
         if (!lazyImages.length) return;
@@ -105,8 +105,12 @@ document.addEventListener('DOMContentLoaded', function() {
                         
                         // Update layout after image loads
                         img.addEventListener('load', () => {
-                            if (masonry) {
-                                masonry.layout();
+                            if (masonryInstances && masonryInstances.length) {
+                                masonryInstances.forEach(masonry => {
+                                    if (masonry && masonry.layout) {
+                                        masonry.layout();
+                                    }
+                                });
                             }
                         });
                     }
